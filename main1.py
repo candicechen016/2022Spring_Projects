@@ -42,22 +42,24 @@ class GameState:
                            'positions2': np.argwhere(self.board2 == player + '2'),
                            'king_positions2': np.argwhere(self.board2 == player + '2k')}}
 
-    def get_normal_move(self, positions, board):
-
-        one_move_list = []
+    def get_normal_move_state(self, row_dir_list, positions, board):
+        one_move_board = []
+        second_move_list=[]
         for position in positions:
-            next_row = position[0] + self.direction
-            next_col_list = [position[1] - 1, position[1] + 1]
-            for next_col in next_col_list:
-                if board[next_row, next_col] == '.':
-                    next_one_move = self.update_board(self.player + '1', position, [next_row, next_col], board, False)
-                    one_move_list.append(next_one_move)
-                    for i in [1, -1]:
-                        if board[next_row, next_col][0] == self.opponent and board[next_row + self.direction, next_col + i] == '.':
-                            next_capture_move = self.update_board(self.player + '1', position, [next_row + self.direction, next_col + i],
-                                                                  board, True)
-                            one_move_list.append(next_capture_move)
-        return one_move_list
+            for row_dir in row_dir_list:
+                next_row = position[0] + row_dir
+                for dir in [-1,1]:
+                    next_col = position[1] + dir
+                    if board[next_row, next_col] == '.':
+                        next_one_move = self.update_board(position, [next_row, next_col], board, False)
+                        one_move_board.append(next_one_move)
+
+                    if board[next_row, next_col][0] == self.opponent:
+                        if board[next_row + row_dir, next_col + dir] == '.':
+                            next_capture_move = self.update_board(position, [next_row + row_dir, next_col + dir],
+                                                                      board, True)
+                            one_move_board.append(next_capture_move)
+        return one_move_board
 
     def move_list(self):
         """
@@ -69,26 +71,26 @@ class GameState:
         :param tranfer_board: transfer board for current player
         :return:
         """
-        one_move_list = {'board1': self.get_normal_move(self.positions['board1']['positions1'], self.board1),
-                         'board2': self.get_normal_move(self.positions['board1']['positions2'], self.board2)}
+        one_move_list = {'board1': self.get_normal_move_state( [self.direction],self.positions['board1']['positions1'],self.board1),
+                         'board2': self.get_normal_move_state( [self.direction],self.positions['board2']['positions2'],self.board2)}
 
         return one_move_list
 
-    def update_board(self, player, position, next_position, board, capture):
+    def update_board(self, position, next_position, board, capture):
         board_temp=copy.deepcopy(board)
         board_temp[position[0], position[1]] = '.'
-        board_temp[next_position[0], next_position[1]] = player  # change to king
+        board_temp[next_position[0], next_position[1]] = board[position[0], position[1]]  # change to king
         if capture:
             board_temp[position[0], position[1]] = '.'
-            board_temp[next_position[0], next_position[1]] = player
-            board_temp[(position[0] + next_position[0]) / 2, (position[1] + next_position[1]) / 2] = '.'
+            board_temp[next_position[0], next_position[1]] = board[position[0], position[1]]
+            board_temp[int((position[0] + next_position[0]) / 2), int((position[1] + next_position[1]) / 2)] = '.'
         return board_temp
 
 
 if __name__ == '__main__':
     board1 = np.array([[1, 1, 1, 1, 1, 1],
                        [1, 'w1', '.', 'w1', '.', 1],
-                       [1, '.', '.', '.', '.', 1],
+                       [1, '.', 'b1', '.', '.', 1],
                        [1, '.', '.', '.', '.', 1],
                        [1, '.', 'b1', '.', 'b1', 1],
                        [1, 1, 1, 1, 1, 1]])
