@@ -4,6 +4,7 @@ Parallel-Universes Checkers.
 winninig:
 1. NO PIECES on both boards
 2. NO STEPS AND NO TRANFE on both boards
+
 rules:
 1. can only Transfer once
 2. can not capture at the transferring round
@@ -14,154 +15,103 @@ rules:
 
 """
 
-
 import numpy as np
 import random
 
+
 class GameState:
     def __init__(self):
-        self.board1 = [['w1', '.', 'w1', '.'],
-                      ['.', 'w1', '', 'w1'],
-                      ['b1', '.', 'b1', '.'],
-                      ['.', 'b1', '.','b1']]  # numpy array 6x6
+        self.board1 = np.array([[1, 1, 1, 1, 1, 1, 1, 1],
+                                [1, 'w1', '.', 'w1', '.', 'w1', '.', 1],
+                                [1, '.', 'w1', '.', 'w1', '.', 'w1', 1],
+                                [1, '.', '.', '.', '.', '.', '.', 1],
+                                [1, '.', '.', '.', '.', '.', '.', 1],
+                                [1, 'b1', '.', 'b1', '.', 'b1', '.', 1],
+                                [1, '.', 'b1', '.', 'b1', '.', 'b1', 1],
+                                [1, 1, 1, 1, 1, 1, 1, 1]])
 
-        self.board2 = [['.', 'w2', '.', 'w2'],
-                       ['.', '.', '.', '.'],
-                       ['.', '.', '.', '.'],
-                       ['.', '.', '.', '.']]  # np.argwhere(self.pstate==player)
+        self.board2 = np.array([[1, 1, 1, 1, 1, 1, 1, 1],
+                                [1, '.', 'w2', '.', 'w2', '.', 'w2', 1],
+                                [1, 'w2', '.', 'w2', '.', 'w2', '.', 1],
+                                [1, '.', '.', '.', '.', '.', '.', 1],
+                                [1, '.', '.', '.', '.', '.', '.', 1],
+                                [1, '.', 'b2', '.', 'b2', '.', 'b2', 1],
+                                [1, 'b2', '.', 'b2', '.', 'b2', '.', 1],
+                                [1, 1, 1, 1, 1, 1, 1, 1]])
 
-        self.placed_positions = {    # to store moves
-            w1: np.array([(0,0)]),
-            w2: None,
-            b1:None,
-            b2:None}
+    def find_orthogonally_neighbors(self, piece, piece_position, board):
+        x, y = piece_position
+        neighbors = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
 
+        empty = []
+        for n in neighbors:
+            #     print(n)
+            # if size in n or -1 in n:
+            #     continue
+            # else:
+            if board[n] == '.':
+                empty.append(n)
+        print(empty)
+        return empty
 
+    def check_win(self, player):
+        boards = [self.board1, self.board2 ]
+        all_valid = []
+        for board in boards.values():
+            for piece in player:
+                piece_positions = np.argwhere(board == piece)
+                # condition 1: the player has NO PIECES on Both boards
+                if piece_positions.size == 0:
+                    continue
+                else:
+                    # condition 2: the player has NO STEPS AND NO way to transfer on both boards
 
-
-    def capture(self):
-
-    def check_win(self):
-
+                    for position in piece_positions:
+                        valid_transfer_squares = self.find_orthogonally_neighbors(piece, position, board)
+                        all_valid += valid_transfer_squares
+        if not all_valid:
+            return True
+        # else:
+        #     for position in valid_transfer_squares:
+        #         # TODO: call make move function and get the boards
+        else:
+            return False
 
 
 
     def make_move(self):
 
 
-    def get_move_list(self):
-        """get valid moves, i.e. empty squares"""
 
-
-    def update_board(self):
+    def capture(self):
 
 
 
 
-class Piece:
-
-    def __int__(self):
-        self.color = []
 
 
-    """
-    This class is used to initialise the board, check the winning conditions and check if the move
-    played by user is a valid move
-    """
-    def __init__(self):
-        self.board = [['.', '.', '.', '.'],
-                      ['.', '.', '.', '.'],
-                      ['.', '.', '.', '.'],
-                      ['.', '.', '.', '.']]
 
-    def get_board_str(self):
-        return str(self.board)
 
-    def get_board(self):
-        return self.board
-
-    def __str__(self):
-        return '\n'.join(map(' '.join, self.board))
-
-    def valid_move(self, move):
-        x, y = move[0], move[1]
-        if 0 <= x <= 3 and 0 <= y <= 3 and self.board[x][y] == '.':
-            return True
-        return False
-
-    def draw(self):
-        return all(all(x != '.' for x in y) for y in self.board)
-
-    def winning(self):
-        board = np.array(self.board)
-        if board[0, 0] != '.' and (board[0, 0] == board[0, 3] == board[3, 0] == board[3, 3]):
-            return True
-
-        if any([True if (board[i, 0] != '.' and (board[i, 0] == board[i, 1] == board[i, 2] == board[i, 3]))
-                else False for i in range(0, 4)]):
-            return True
-
-        if any([True if (board[0, j] != '.' and (board[0, j] == board[1, j] == board[2, j] == board[3, j]))
-                else False for j in range(0, 4)]):
-            return True
-        for row in range(0, 3):
-            for col in range(0, 3):
-                if board[row, col] != '.' and \
-                        (board[row, col] == board[row + 1, col] == board[row, col + 1] == board[row + 1, col + 1]):
-                    return True
-
-        if board[0, 0] != '.' and board[0, 0] == board[1, 1] == board[2, 2] == board[3, 3]:
-            return True
-        if board[0, 3] != '.' and board[0, 3] == board[1, 2] == board[2, 1] == board[3, 0]:
-            return True
-
-        return False
-
-    def play_move(self, position, marker):
-        self.board[position[0]][position[1]] = marker
 
 
 class RandomPlayer:
     """
     This class represents the RandomPlayer where the player moves are generated randomly
     """
+
     def __init__(self, player):
         self.player = player
         self.win_count = 0
         self.draw_count = 0
         self.lose_count = 0
 
-    def get_move(self, board):
-        while True:
-            move = (random.randrange(4), random.randrange(4))
-            if board.valid_move(move):
-                break
-        return move
 
-    def start_game(self):
-        pass
-
-    def win_game(self):
-        self.win_count = self.win_count + 1
-        return f"Player {self.player} won!"
-
-    def lose_game(self):
-        self.lose_count = self.lose_count + 1
-        return f"Player {self.player} lost!"
-
-    def draw_game(self):
-        self.draw_count = self.draw_count + 1
-        return f"It's a draw"
-
-    def return_count(self):
-        print(f"Random Winning counts, Win: {self.win_count}, Draw: {self.draw_count}, Lose: {self.lose_count}")
-
-
-class MenacePlayer:
+class AIPlayer:
     """
     This class represents the Menace player , it contains a function which keeps track of all the win and lost moves of
     the player in a dictionary.
     """
+
     def __init__(self, player):
         self.player = player
         self.matchbox_dict = {}
@@ -240,12 +190,9 @@ def play_game(first, second):
 
 
 if __name__ == '__main__':
-    player1 = MenacePlayer(1)
+    # player1 = MenacePlayer(1)
     player2 = RandomPlayer(2)
-    for i in range(1, 1000):
-        play_game(player1, player2)
-    player1.return_count()
+    # for i in range(1, 1000):
+    #     play_game(player1, player2)
+    # player1.return_count()
     player2.return_count()
-
-
-
