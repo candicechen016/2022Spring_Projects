@@ -13,21 +13,23 @@ rules:
     b. move one piece of each board
 
 """
+import copy
 
 import numpy as np
 import random
 
 
 class GameState:
-    def __init__(self, board_size, player,board1, board2):
+    def __init__(self, board_size, player, board1, board2):
         self.board1 = board1
         self.board2 = board2
         self.board_size = board_size
-        self.player=player
-        self.opponent='b' if self.player=='w' else 'w'
+        self.player = player
+        self.direction = 1 if self.player == 'w' else -1
+        self.opponent = 'b' if self.player == 'w' else 'w'
 
-        self.w_position = self.get_positions('w')
-        self.b_position = self.get_positions('b')
+        self.positions = self.get_positions(self.player)
+        self.opponent_position = self.get_positions(self.opponent)
 
     def get_positions(self, player):
         return {'board1': {'positions1': np.argwhere(self.board1 == player + '1'),
@@ -40,22 +42,26 @@ class GameState:
                            'positions2': np.argwhere(self.board2 == player + '2'),
                            'king_positions2': np.argwhere(self.board2 == player + '2k')}}
 
-    def get_normal_move(self, positions, board):
-        one_move_list = []
-        two_move_list = []
+    def get_normal_move_state(self, row_dir_list, positions, board):
+        one_move_board = []
+        second_move_list=[]
         for position in positions:
-            if board1[position[0] - 1, position[1] + 1] == '.':
-                next_one_move=self.move(self.player + '1', position, [position[0] - 1, position[1] + 1], board, False)
-                one_move_list.append(next_one_move)
-                if board1[position[0] - 1, position[1] + 1][0] == self.opponent and board1[position[0] - 2, position[1] + 2][0]=='.':
-                    next_two_move=self.move(self.player + '1', position, [position[0] - 2, position[1] + 2], board, True)
-            if board1[position[0] + 1, position[1] + 1] == '.':
-                one_move_list.append(self.move(self.player + '1', position, [position[0] + 1, position[1] + 1], board, False))
-        return one_move_list
+            for row_dir in row_dir_list:
+                next_row = position[0] + row_dir
+                for dir in [-1,1]:
+                    next_col = position[1] + dir
+                    if board[next_row, next_col] == '.':
+                        next_one_move = self.update_board(position, [next_row, next_col], board, False)
+                        one_move_board.append(next_one_move)
 
+                    if board[next_row, next_col][0] == self.opponent:
+                        if board[next_row + row_dir, next_col + dir] == '.':
+                            next_capture_move = self.update_board(position, [next_row + row_dir, next_col + dir],
+                                                                      board, True)
+                            one_move_board.append(next_capture_move)
+        return one_move_board
 
-
-    def movie_list(self):
+    def move_list(self):
         """
         :param positions1: postions of pieces in original board, ex. w1 in board1, b2 in board2
         :param king_postions1: postions of king pieces in original board, ex. w1k in board1, b2k in board2
@@ -65,31 +71,35 @@ class GameState:
         :param tranfer_board: transfer board for current player
         :return:
         """
-        pass
+        one_move_list = {'board1': self.get_normal_move_state( [self.direction],self.positions['board1']['positions1'],self.board1),
+                         'board2': self.get_normal_move_state( [self.direction],self.positions['board2']['positions2'],self.board2)}
 
-    def update_board(self, player, position, next_position, board, capture):
-        board[position[0], position[1]] = '.'
-        board[next_position[0], next_position[1]] = player  # change to king
+        return one_move_list
+
+    def update_board(self, position, next_position, board, capture):
+        board_temp=copy.deepcopy(board)
+        board_temp[position[0], position[1]] = '.'
+        board_temp[next_position[0], next_position[1]] = board[position[0], position[1]]  # change to king
         if capture:
-            board[position[0], position[1]] = '.'
-            board[next_position[0], next_position[1]] = player
-            board[(position[0] + next_position[0]) / 2, (position[1] + next_position[1]) / 2] = '.'
-        return board
+            board_temp[position[0], position[1]] = '.'
+            board_temp[next_position[0], next_position[1]] = board[position[0], position[1]]
+            board_temp[int((position[0] + next_position[0]) / 2), int((position[1] + next_position[1]) / 2)] = '.'
+        return board_temp
 
 
 if __name__ == '__main__':
     board1 = np.array([[1, 1, 1, 1, 1, 1],
                        [1, 'w1', '.', 'w1', '.', 1],
-                       [1, '.', '.', '.', '.', 1],
+                       [1, '.', 'b1', '.', '.', 1],
                        [1, '.', '.', '.', '.', 1],
                        [1, '.', 'b1', '.', 'b1', 1],
                        [1, 1, 1, 1, 1, 1]])
 
     board2 = np.array([[1, 1, 1, 1, 1, 1],
-                       [1,'.', 'w2', '.', 'w2',1],
-                       [1,'.', '.', '.', '.',1],
-                       [1,'.', '.', '.', '.',1],
-                       [1,'b2', '.', 'b2', '.',1],
+                       [1, '.', 'w2', '.', 'w2', 1],
+                       [1, '.', '.', '.', '.', 1],
+                       [1, '.', '.', '.', '.', 1],
+                       [1, 'b2', '.', 'b2', '.', 1],
                        [1, 1, 1, 1, 1, 1]])
     #
     # board1 = np.array([[1, 1, 1, 1, 1, 1, 1, 1],
@@ -111,7 +121,6 @@ if __name__ == '__main__':
     #     [1, 'b2', '.', 'b2', '.', 'b2', '.', 1],
     #     [1, 1, 1, 1, 1, 1, 1, 1]])
 
-    gs1 = GameState(4,'w',board1, board2)
+    gs1 = GameState(4, 'w', board1, board2)
 
-    print(gs1.w_position)
-    print(gs1.opponent)
+    print(gs1.move_list())
