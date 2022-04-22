@@ -26,8 +26,8 @@ class GameState:
         self.player=player
         self.opponent='b' if self.player=='w' else 'w'
 
-        self.w_position = self.get_positions('w')
-        self.b_position = self.get_positions('b')
+        self.positions = self.get_positions(self.player)
+        self.opponent_position = self.get_positions(self.opponent)
 
     def get_positions(self, player):
         return {'board1': {'positions1': np.argwhere(self.board1 == player + '1'),
@@ -45,17 +45,18 @@ class GameState:
         two_move_list = []
         for position in positions:
             if board1[position[0] - 1, position[1] + 1] == '.':
-                next_one_move=self.move(self.player + '1', position, [position[0] - 1, position[1] + 1], board, False)
+                next_one_move=self.update_board(self.player + '1', position, [position[0] - 1, position[1] + 1], board, False)
                 one_move_list.append(next_one_move)
                 if board1[position[0] - 1, position[1] + 1][0] == self.opponent and board1[position[0] - 2, position[1] + 2][0]=='.':
-                    next_two_move=self.move(self.player + '1', position, [position[0] - 2, position[1] + 2], board, True)
+                    next_two_move=self.update_board(self.player + '1', position, [position[0] - 2, position[1] + 2], board, True)
+                    two_move_list.append(next_two_move)
             if board1[position[0] + 1, position[1] + 1] == '.':
-                one_move_list.append(self.move(self.player + '1', position, [position[0] + 1, position[1] + 1], board, False))
-        return one_move_list
+                one_move_list.append(self.update_board(self.player + '1', position, [position[0] + 1, position[1] + 1], board, False))
+        return one_move_list, two_move_list
 
 
 
-    def movie_list(self):
+    def move_list(self):
         """
         :param positions1: postions of pieces in original board, ex. w1 in board1, b2 in board2
         :param king_postions1: postions of king pieces in original board, ex. w1k in board1, b2k in board2
@@ -65,7 +66,10 @@ class GameState:
         :param tranfer_board: transfer board for current player
         :return:
         """
-        pass
+        one_move_list={'board1': self.get_normal_move(self.positions['board1']['positions1'],self.board1),
+                       'board2': self.get_normal_move(self.positions['board1']['positions2'],self.board2)}
+
+        return one_move_list
 
     def update_board(self, player, position, next_position, board, capture):
         board[position[0], position[1]] = '.'
@@ -113,5 +117,4 @@ if __name__ == '__main__':
 
     gs1 = GameState(4,'w',board1, board2)
 
-    print(gs1.w_position)
-    print(gs1.opponent)
+    print(gs1.move_list())
