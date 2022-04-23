@@ -14,7 +14,7 @@ rules:
     b. move one piece of each board
 
 """
-from random import random
+import random
 
 import numpy as np
 import copy
@@ -142,15 +142,17 @@ class GameState:
 
     def check_win(self):
         all_valid = []
-        for board in self.boards.values():
+        for board_name in ['board1','board2']:
             # for piece in self.player:
-            piece_positions = self.positions[board]['positions1']+self.positions[board]['positions2']+self.positions[board]['king_positions1']+self.positions[board]['king_positions2']
+            piece_positions = np.concatenate((self.positions[board_name]['positions1'],self.positions[board_name]['positions2'],self.positions[board_name]['king_positions1'],self.positions[board_name]['king_positions2']))
                 # condition 1: the player has NO PIECES on Both boards
-            if (piece_positions).size == 0:
+
+            if piece_positions.size == 0:
                 continue
             else:
                     # condition 2: the player has NO STEPS and NO WAY to transfer to both boards
                 for position in piece_positions:
+                    board=self.board1 if board_name=='board1' else self.board2
                     valid_transfer_squares = self.find_orthogonally_neighbors(position, board)
                     all_valid += valid_transfer_squares
         if not all_valid:
@@ -160,15 +162,17 @@ class GameState:
 
     # def transfer_piece(self, position, next_position, board1, board2):
     def transfer_piece(self, move_dict):
-        start_board = copy.deepcopy(self.board1)
-        end_board = copy.deepcopy(self.board2)
-        if move_dict['start_board'] == 2:
-            start_board = copy.deepcopy(self.board2)
-            end_board = copy.deepcopy(self.board1)
+        board1=self.board1  if move_dict['start_board']==1 else self.board2
+        board2=self.board1 if move_dict['end_board'] == 1 else self.board2
+        start_board = copy.deepcopy(board1)
+        end_board = copy.deepcopy(board2)
+        # if move_dict['start_board'] == 2:
+        #     start_board = copy.deepcopy(self.board2)
+        #     end_board = copy.deepcopy(self.board1)
         start_move, end_move = move_dict['start_move'], move_dict['end_move']
-        new_board1[start_move[0], start_move[1]] = '.'
-        new_board2[end_move[0], end_move[1]] = board1[start_move[0], end_move[1]]
-        return new_board1, new_board2
+        start_board[start_move[0], start_move[1]] = '.'
+        end_board[end_move[0], end_move[1]] = board1[start_move[0], start_move[1]]
+        return start_board, end_board
 
     def get_transferred_list(self, row_dir_list, positions, board, board_num):
         # board = {1:'board1', 2:'board2'}
@@ -194,9 +198,9 @@ class GameState:
                 to_move = {'start_move': (piece[0], piece[1]), 'start_board': board_num, 'end_move': move,
                            'end_board': end_board_num, 'capture': False}
 
-                next_move_board = self.transfer_piece(piece, move, board, other_board)[1]
+                next_move_board = self.transfer_piece(to_move)[1]
 
-                second_move_list, second_move_board = self.get_one_move(row_dir_list, [move], new_end_board,
+                second_move_list, second_move_board = self.get_one_move(row_dir_list, [move], next_move_board,
                                                                         end_board_num)
                 if len(second_move_list):
                     transfer_board_list.append(second_move_board)
@@ -237,15 +241,18 @@ class GameState:
                 'transfer_move_board': transfer_list_nomarl1 + transfer_list_nomarl2 + transfer_list_king1 + transfer_list_king2}
 
 def next_random_moves(next_move_options):
-    mode1_num=len(next_move_options['one_move_each_board']['board1']*next_move_options['one_move_each_board']['board2'])
+    mode1_num=len(next_move_options['one_move_each_board']['board1'])*len(next_move_options['one_move_each_board']['board2'])
     mode2_num=len(next_move_options['two_moves_one_board'])
-    option_list=list=[1]*mode1_num+[2]*mode2_num
+    mode3_num = len(next_move_options['transfer_move_board'])
+    option_list=[1]*mode1_num+[2]*mode2_num+[3]*mode3_num
     next_move_mode=random.choice(option_list)
     if next_move_mode==1:
         next_move=[random.choice(next_move_options['one_move_each_board']['board1']),
                    random.choice(next_move_options['one_move_each_board']['board2'])]
     elif next_move_mode==2:
         next_move=random.choice(next_move_options['two_moves_one_board'])
+    elif next_move_mode == 3:
+        next_move = random.choice(next_move_options['transfer_move_board'])
     return next_move
 
 
@@ -285,9 +292,7 @@ if __name__ == '__main__':
 
     player='w'
     gs1 = GameState(4, 'w', board1, board2)
-    next_move_options = gs1.move_list()
-
-    # print(gs1.move_list())
+    # next_move_options = gs1.move_list()
     # for key, j in next_move_options.items():
     #     print(key, j)
 
@@ -297,15 +302,21 @@ if __name__ == '__main__':
             game_over = True
         next_move_options = gs1.move_list()
         next_move = next_random_moves(next_move_options)
+        print('player',gs1.player, 'next_move', next_move)
         for move in next_move:
             if move['start_board'] != move['end_board']:
                 new_board1, new_board2 = gs1.transfer_piece(move)
             else:
-                new_board1, new_board2 = gs1.update_board_normal(move)
+                if move['start_board'] == 1:
+                    new_board1 = gs1.update_board_normal(move)
+                    new_board2 = gs1.board2
+                else:
+                    new_board2 = gs1.update_board_normal(move)
+                    new_board1 = gs1.board1
+        next_player='b' if gs1.player=='w' else 'w'
+        gs1 = GameState(4, next_player, new_board1, new_board2)
 
-        gs_new = GameState(4, 'b', new_board1, new_board2)
 
-    next_move_options = gs1.move_list()
 
 # {'one_move_each_board': {'board1': [{'start_move': (1, 1), 'start_board': 1, 'end_move': (3, 3), 'end_board': 1, 'capture': True}, {'start_move': (1, 3), 'start_board': 1, 'end_move': (3, 1), 'end_board': 1, 'capture': True}, {'start_move': (1, 3), 'start_board': 1, 'end_move': (2, 4), 'end_board': 1, 'capture': False}, {'start_move': (3, 4), 'start_board': 1, 'end_move': (4, 3), 'end_board': 1, 'capture': False}], 'board2': [{'start_move': (1, 2), 'start_board': 2, 'end_move': (2, 1), 'end_board': 2, 'capture': False}, {'start_move': (1, 2), 'start_board': 2, 'end_move': (2, 3), 'end_board': 2, 'capture': False}, {'start_move': (1, 4), 'start_board': 2, 'end_move': (2, 3), 'end_board': 2, 'capture': False}]}, 'two_moves_one_board': [[{'start_move': (1, 3), 'start_board': 1, 'end_move': (2, 4), 'end_board': 1, 'capture': False}, {'start_move': (2, 4), 'start_board': 1, 'end_move': (3, 3), 'end_board': 1, 'capture': False}], [{'start_move': (1, 2), 'start_board': 2, 'end_move': (2, 1), 'end_board': 2, 'capture': False}, {'start_move': (2, 1), 'start_board': 2, 'end_move': (3, 2), 'end_board': 2, 'capture': False}], [{'start_move': (1, 2), 'start_board': 2, 'end_move': (2, 3), 'end_board': 2, 'capture': False}, {'start_move': (2, 3), 'start_board': 2, 'end_move': (3, 2), 'end_board': 2, 'capture': False}], [{'start_move': (1, 2), 'start_board': 2, 'end_move': (2, 3), 'end_board': 2, 'capture': False}, {'start_move': (2, 3), 'start_board': 2, 'end_move': (3, 4), 'end_board': 2, 'capture': False}], [{'start_move': (1, 4), 'start_board': 2, 'end_move': (2, 3), 'end_board': 2, 'capture': False}, {'start_move': (2, 3), 'start_board': 2, 'end_move': (3, 2), 'end_board': 2, 'capture': False}], [{'start_move': (1, 4), 'start_board': 2, 'end_move': (2, 3), 'end_board': 2, 'capture': False}, {'start_move': (2, 3), 'start_board': 2, 'end_move': (3, 4), 'end_board': 2, 'capture': False}]], 'transfer_move_board': [[{'start_move': (1, 1), 'start_board': 1, 'end_move': (2, 1), 'end_board': 2, 'capture': False}, {'start_move': (2, 1), 'start_board': 2, 'end_move': (3, 2), 'end_board': 2, 'capture': False}], [{'start_move': (1, 3), 'start_board': 1, 'end_move': (2, 3), 'end_board': 2, 'capture': False}, {'start_move': (2, 3), 'start_board': 2, 'end_move': (3, 2), 'end_board': 2, 'capture': False}], [{'start_move': (1, 3), 'start_board': 1, 'end_move': (2, 3), 'end_board': 2, 'capture': False}, {'start_move': (2, 3), 'start_board': 2, 'end_move': (3, 4), 'end_board': 2, 'capture': False}], [{'start_move': (3, 4), 'start_board': 1, 'end_move': (2, 4), 'end_board': 2, 'capture': False}, {'start_move': (2, 4), 'start_board': 2, 'end_move': (3, 3), 'end_board': 2, 'capture': False}], [{'start_move': (3, 4), 'start_board': 1, 'end_move': (3, 3), 'end_board': 2, 'capture': False}, {'start_move': (3, 3), 'start_board': 2, 'end_move': (4, 2), 'end_board': 2, 'capture': False}], [{'start_move': (3, 4), 'start_board': 1, 'end_move': (3, 3), 'end_board': 2, 'capture': False}, {'start_move': (3, 3), 'start_board': 2, 'end_move': (4, 4), 'end_board': 2, 'capture': False}], [{'start_move': (1, 4), 'start_board': 2, 'end_move': (2, 4), 'end_board': 1, 'capture': False}, {'start_move': (2, 4), 'start_board': 1, 'end_move': (3, 3), 'end_board': 1, 'capture': False}]]}
 # one_move_each_board {'board1': [{'start_move': (1, 1), 'start_board': 1, 'end_move': (3, 3), 'end_board': 1, 'capture': True}, {'start_move': (1, 3), 'start_board': 1, 'end_move': (3, 1), 'end_board': 1, 'capture': True}, {'start_move': (1, 3), 'start_board': 1, 'end_move': (2, 4), 'end_board': 1, 'capture': False}, {'start_move': (3, 4), 'start_board': 1, 'end_move': (4, 3), 'end_board': 1, 'capture': False}], 'board2': [{'start_move': (1, 2), 'start_board': 2, 'end_move': (2, 1), 'end_board': 2, 'capture': False}, {'start_move': (1, 2), 'start_board': 2, 'end_move': (2, 3), 'end_board': 2, 'capture': False}, {'start_move': (1, 4), 'start_board': 2, 'end_move': (2, 3), 'end_board': 2, 'capture': False}]}
