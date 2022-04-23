@@ -90,13 +90,13 @@ class GameState:
                 for dir in [-1, 1]:
                     next_col = position[1] + dir
                     if board[next_row, next_col] == '.':
-                        next_one_move = self.update_board(position, [next_row, next_col], board, False)
+                        next_one_move = self.update_board_normal(position, [next_row, next_col], board, False)
                         one_move_board.append(next_one_move)
                         one_move_list.append({'start_move': (position[0], position[1]), 'start_board': board_num,
                                                   'end_move': (next_row, next_col),'end_board': board_num,'capture':False})
                     if board[next_row, next_col][0] == self.opponent:
                         if board[next_row + row_dir, next_col + dir] == '.':
-                            next_capture_move = self.update_board(position, [next_row + row_dir, next_col + dir],
+                            next_capture_move = self.update_board_normal(position, [next_row + row_dir, next_col + dir],
                                                                   board, True)
                             one_move_board.append(next_capture_move)
                             one_move_list.append({'start_move': (position[0], position[1]), 'start_board': board_num,
@@ -148,7 +148,7 @@ class GameState:
                 else:
                     # condition 2: the player has NO STEPS and NO WAY to transfer to both boards
                     for position in piece_positions:
-                        valid_transfer_squares = self.find_orthogonally_neighbors(piece, position, board)
+                        valid_transfer_squares = self.find_orthogonally_neighbors(position, board)
                         all_valid += valid_transfer_squares
         if not all_valid:
             return True
@@ -156,14 +156,14 @@ class GameState:
         else:
             return False
 
-    def transfer_one_piece(self, position, next_position, board1, board2):
+    def transfer_piece(self, position, next_position, board1, board2):
         new_board1 = copy.deepcopy(board1)
         new_board2 = copy.deepcopy(board2)
         new_board1[position[0], position[1]] = '.'
         new_board2[next_position[0], next_position[1]] = board1[position[0],position[1]]
         return (new_board1, new_board2)
 
-    def get_transferred_list(self, row_dir_list,board, positions,board_num):
+    def get_transferred_list(self, row_dir_list, positions,board,board_num):
         # board = {1:'board1', 2:'board2'}
         end_board_num = 2 if board_num==1 else 1
         other_board=self.board2 if board_num==1 else self.board1
@@ -181,21 +181,21 @@ class GameState:
 
             # positions_current_board_man = self.positions[value]['positions1']
             # positions_current_board_king  = self.positions[value]['king_positions1']
-            for piece in positions:
-                list = self.find_orthogonally_neighbors(piece, board2)
-                for move in list:
-                    to_move = {'start_move': (piece[0], piece[1]), 'start_board': board_num, 'end_move': move,
-                               'end_board': end_board_num, 'capture': False}
+        for piece in positions:
+            list = self.find_orthogonally_neighbors(piece, board2)
+            for move in list:
+                to_move = {'start_move': (piece[0], piece[1]), 'start_board': board_num, 'end_move': move,
+                            'end_board': end_board_num, 'capture': False}
 
-                    next_move_board = self.transfer_piece(piece, move, board, other_board)
+                next_move_board = self.transfer_piece(piece, move, board, other_board)[1]
 
-                    # TODO: determine whether 'positions1' become a king
-                    second_move_list, second_move_board = self.get_one_move(self, row_dir_list, move, next_move_board, end_board_num)
-                    if len(second_move_list):
-                        transfer_board_list.append(second_move_board)
-                        for second_move in second_move_list:
-                            transfer_move_list.append([to_move, second_move])
-            return transfer_board_list,transfer_move_list
+                # TODO: determine whether 'positions1' become a king
+                second_move_list, second_move_board = self.get_one_move(row_dir_list, [move], next_move_board, end_board_num)
+                if len(second_move_list):
+                    transfer_board_list.append(second_move_board)
+                    for second_move in second_move_list:
+                        transfer_move_list.append([to_move, second_move])
+        return transfer_board_list,transfer_move_list
 
     def move_list(self):
         one_move_list_nomarl1, one_move_board_normal1 = self.get_one_move([self.direction], np.concatenate(
@@ -278,8 +278,6 @@ if __name__ == '__main__':
     print(gs1.move_list())
 
 
-
-    game = GameState()
     #
     # print(game.boards['1'])
     # print(game.boards['2'])
