@@ -148,7 +148,7 @@ class GameState:
                 if piece_positions.size == 0:
                     continue
                 else:
-                    # condition 2: the player has NO STEPS AND NO way to transfer on both boards
+                    # condition 2: the player has NO STEPS and NO WAY to transfer to both boards
                     for position in piece_positions:
                         valid_transfer_squares = self.find_orthogonally_neighbors(piece, position, board)
                         all_valid += valid_transfer_squares
@@ -158,7 +158,7 @@ class GameState:
         else:
             return False
 
-    def transfer_piece(self, player, position, next_position, board1, board2):
+    def transfer_one_piece(self, player, position, next_position, board1, board2):
         new_board1 = copy.deepcopy(board1)
         new_board2 = copy.deepcopy(board2)
         new_board1[position[0], position[1]] = '.'
@@ -166,28 +166,44 @@ class GameState:
         return (new_board1, new_board2)
 
     def get_transferred_list(self, player):
+        board = {1:'board1', 2:'board2'}
+        end_board_num = 2
         board1 = self.board1
         board2 = self.board2
         transfer_move_list = []
         transfer_board_list = []
 
-        for key in self.positions.keys():
-            if key != 'board1':
+        for key, value in board.items():
+            if key != 1:
+                end_board_num = 1
+            if value != 'board1':
                 board1 = self.board2
                 board2 = self.board1
 
-            positions_current_board = self.positions[key]['positions1'] + self.positions[key]['king_positions1']
+            positions_current_board_man = self.positions[value]['positions1']
+            positions_current_board_king  = self.positions[value]['king_positions1']
             for piece in positions_current_board:
                 list = self.find_orthogonally_neighbors(piece, board2)
-                if list:
-                    for move in list:
-                        next_move_board = self.transfer_piece(player, piece, move, board1, board2)
-                        transfer_board_list.append(next_move_board)
-                        # TODO: check board_num data type
-                        to_move = {'start_move': (piece[0], piece[1]), 'start_board': board1, 'end_move': move,
-                                   'end_board': board2}
-                        transfer_move_list.append(to_move)
-        return transfer_move_list, transfer_board_list
+                for move in list:
+                    to_move = {'start_move': (piece[0], piece[1]), 'start_board': key, 'end_move': move,
+                               'end_board': end_board_num, 'capture': False}
+
+                    next_move_board = self.transfer_piece(player, piece, move, board1, board2)
+
+                    # TODO: determine whether 'positions1' become a king
+
+                    [1,-1]
+                    second_move_list, second_move_board = self.get_one_move(self, row_dir_list, positions, next_move_board, end_board_num)
+
+                    if len(second_move_list):
+                        transfer_board_list.append(second_move_board)
+                        for second_move in second_move_list:
+                            transfer_move_list.append([to_move, second_move])
+                    transfer_board_list.append(second_move_board)
+
+
+
+        return transfer_move_list
 
     def move_list(self):
         one_move_list_nomarl1, one_move_board_normal1 = self.get_one_move([self.direction], np.concatenate(
@@ -241,10 +257,35 @@ if __name__ == '__main__':
     #     [1, '.', 'b2', '.', 'b2', '.', 'b2', 1],
     #     [1, 'b2', '.', 'b2', '.', 'b2', '.', 1],
     #     [1, 1, 1, 1, 1, 1, 1, 1]])
+
     gs1 = GameState(4, 'w', board1, board2)
     GameState(4, 'w')
 
+    print(gs1.move_list())
 
-# retrieve all w1 or w1k
+
+
+    game = GameState()
+
+    print(game.boards['1'])
+    print(game.boards['2'])
+
+    player = ['w', 'b']
+
+    player[0].make_move()
+    if game.check_win(player[0])
+
+    # len(to_move) = 2
+    # to_move =[{start_move: move,  # (x1,y1)
+    #         start_board: board,  # '1'
+    #         end_move: move,  # (x2,y2)
+    #         end_move: board  # '2'
+    #         },
+    #         {
+    #             start_move: move,
+    #             start_board: board,
+    #             end_move: move,
+    #             end_move: board
+    #         }]
 
 
