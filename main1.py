@@ -98,8 +98,7 @@ class GameState:
         two_move_board_normal2 = self.get_two_move_state(one_move_list_nomarl2,one_move_board_normal2,[self.direction])
         two_move_board_king1 = self.get_two_move_state(one_move_list_king1, one_move_board_king1,[1,-1])
         two_move_board_king2 = self.get_two_move_state(one_move_list_king2, one_move_board_king2,[1,-1])
-        return one_move_board_normal1+one_move_board_normal2+one_move_board_king1+one_move_board_king2+two_move_board_normal1+two_move_board_normal2+two_move_board_king1+two_move_board_king2
-
+        return {'board1':one_move_board_normal1+one_move_board_king1}
 
 
 
@@ -107,7 +106,7 @@ if __name__ == '__main__':
     board1 = np.array([[1, 1, 1, 1, 1, 1],
                        [1, 'w1', '.', 'w1', '.', 1],
                        [1, '.', 'b1', '.', '.', 1],
-                       [1, '.', '.', '.', '.', 1],
+                       [1, '.', '.', 'w1k', '.', 1],
                        [1, '.', 'b1', '.', 'b1', 1],
                        [1, 1, 1, 1, 1, 1]])
 
