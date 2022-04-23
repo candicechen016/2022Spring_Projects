@@ -87,7 +87,6 @@ class GameState:
         one_move_board = []
         one_move_list = []
         for position in positions:
-            print(position)
             for row_dir in row_dir_list:
                 next_row = position[0] + row_dir
                 for dir in [-1, 1]:
@@ -96,15 +95,15 @@ class GameState:
                         next_one_move = self.update_board(position, [next_row, next_col], board, False)
                         one_move_board.append(next_one_move)
                         one_move_list.append({'start_move': (position[0], position[1]), 'start_board': board_num,
-                                                  'end_move': (next_row, next_col),'end_board': board_num})
+                                                  'end_move': (next_row, next_col),'end_board': board_num,'capture':False})
                     if board[next_row, next_col][0] == self.opponent:
                         if board[next_row + row_dir, next_col + dir] == '.':
                             next_capture_move = self.update_board(position, [next_row + row_dir, next_col + dir],
-                                                                  board, True)
+                            #                                       board, True)
                             one_move_board.append(next_capture_move)
                             one_move_list.append({'start_move': (position[0], position[1]), 'start_board': board_num,
-                                                  'end_move': (next_row + row_dir, next_col + dir),'end_board': board_num})
-        return one_move_list, one_move_board
+                                                  'end_move': (next_row + row_dir, next_col + dir),'end_board': board_num,'capture':True})
+        return one_move_list,one_move_board
 
     def get_two_continuous_move(self, one_move_list, one_move_board, row_dir):
         two_move_board = []
@@ -119,8 +118,12 @@ class GameState:
 
     def update_board_normal(self, position, next_position, board, capture):
         board_temp = copy.deepcopy(board)
+        player=board[position[0], position[1]]
         board_temp[position[0], position[1]] = '.'
-        board_temp[next_position[0], next_position[1]] = board[position[0], position[1]]  # change to king
+        if (player=='w1' and position[0]==self.board_size) or (player=='b1' and position[0]==1):
+            board_temp[next_position[0], next_position[1]] = player+'k'  # change to king
+        else:
+            board_temp[next_position[0], next_position[1]] = player
         if capture:
             board_temp[position[0], position[1]] = '.'
             board_temp[next_position[0], next_position[1]] = board[position[0], position[1]]
@@ -201,14 +204,15 @@ class GameState:
                                                          [self.direction])
         two_move_list_king1,two_move_board_king1 = self.get_two_continuous_move(one_move_list_king1, one_move_board_king1, [1, -1])
         two_move_list_king2,two_move_board_king2 = self.get_two_continuous_move(one_move_list_king2, one_move_board_king2, [1, -1])
-        return  two_move_list_nomarl1
+        return  {'one_move_each_board':{'board1':one_move_list_nomarl1+one_move_list_king1,'board2':one_move_list_nomarl2+one_move_list_king2},
+                 'two_moves_one_board':two_move_list_nomarl1+two_move_list_nomarl2+two_move_list_king1+two_move_board_king1+two_move_list_king2+two_move_board_king2}
 
 
 if __name__ == '__main__':
     board1 = np.array([[1, 1, 1, 1, 1, 1],
                        [1, 'w1', '.', 'w1', '.', 1],
                        [1, '.', 'b1', '.', '.', 1],
-                       [1, '.', '.', '.', '.', 1],
+                       [1, '.', '.', '.', 'w1', 1],
                        [1, '.', 'b1', '.', 'b1', 1],
                        [1, 1, 1, 1, 1, 1]])
 
@@ -237,34 +241,10 @@ if __name__ == '__main__':
     #     [1, '.', 'b2', '.', 'b2', '.', 'b2', 1],
     #     [1, 'b2', '.', 'b2', '.', 'b2', '.', 1],
     #     [1, 1, 1, 1, 1, 1, 1, 1]])
-
     gs1 = GameState(4, 'w', board1, board2)
     GameState(4, 'w')
 
-    print(gs1.move_list())
 
-
-
-    game = GameState()
-
-    print(game.boards['1'])
-    print(game.boards['2'])
-
-    player = ['w', 'b']
-
-
-
-    # len(to_move) = 2
-    # to_move =[{start_move: move,  # (x1,y1)
-    #         start_board: board,  # '1'
-    #         end_move: move,  # (x2,y2)
-    #         end_move: board  # '2'
-    #         },
-    #         {
-    #             start_move: move,
-    #             start_board: board,
-    #             end_move: move,
-    #             end_move: board
-    #         }]
+# retrieve all w1 or w1k
 
 
