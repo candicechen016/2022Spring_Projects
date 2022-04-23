@@ -20,7 +20,11 @@ import copy
 
 
 class GameState:
-    def __init__(self, board_size, player, board1, board2):
+    def __init__(self, board_size, player, board1=None, board2=None):
+
+        if board1 is None or board2 is None:
+            self.board1, self.board2 = self.initial_board(board_size)
+
         self.board1 = board1
         self.board2 = board2
         self.board_size = board_size
@@ -30,6 +34,34 @@ class GameState:
 
         self.positions = self.get_positions(self.player)
         self.opponent_position = self.get_positions(self.opponent)
+
+    def initial_board(self, size):
+        rows_with_pieces = (size - 2) / 2
+        board = []
+        for i in list(range(size + 2)):
+            if i == 0 or i == size + 1:
+                board.append(['1'] * (size + 2))
+            elif i in [rows_with_pieces + 1, rows_with_pieces + 2]:
+                board.append(['1'] + ['.'] * size + ['1'])
+            else:
+                p = 'w1'
+                if i % 2 != 0:
+                    if i >= (size - rows_with_pieces):
+                        p = 'b1'
+                    board.append(['1'] + ['.', p] * (size // 2) + ['1'])
+                else:
+                    if i >= (size - rows_with_pieces):
+                        p = 'b1'
+                    board.append(['1'] + [p, '.'] * (size // 2) + ['1'])
+
+        b1 = np.array(board)
+        b = np.flip(b1, 1)
+        c = np.where(b == 'w1', 'w2', b)
+        b2 = np.where(c == 'b1', 'b2', c)
+        return b1,b2
+
+
+
 
     def get_positions(self, player):
         """
@@ -85,7 +117,7 @@ class GameState:
                     two_moves.append([one_move_list[i],second_move])
         return two_moves,two_move_board
 
-    def update_board(self, position, next_position, board, capture):
+    def update_board_normal(self, position, next_position, board, capture):
         board_temp = copy.deepcopy(board)
         board_temp[position[0], position[1]] = '.'
         board_temp[next_position[0], next_position[1]] = board[position[0], position[1]]  # change to king
@@ -134,6 +166,8 @@ class GameState:
         board1 = self.board1
         board2 = self.board2
         transfer_move_list = []
+        transfer_board_list = []
+
         for key in self.positions.keys():
             if key != 'board1':
                 board1 = self.board2
@@ -144,9 +178,13 @@ class GameState:
                 list = self.find_orthogonally_neighbors(piece, board2)
                 if list:
                     for move in list:
-                        next_move = self.transfer_piece(player, piece, move, board1, board2)
-                        transfer_move_list.append(next_move)
-        return transfer_move_list
+                        next_move_board = self.transfer_piece(player, piece, move, board1, board2)
+                        transfer_board_list.append(next_move_board)
+                        # TODO: check board_num data type
+                        to_move = {'start_move': (piece[0], piece[1]), 'start_board': board1, 'end_move': move,
+                                   'end_board': board2}
+                        transfer_move_list.append(to_move)
+        return transfer_move_list, transfer_board_list
 
     def move_list(self):
         one_move_list_nomarl1, one_move_board_normal1 = self.get_one_move([self.direction], np.concatenate(
@@ -201,8 +239,32 @@ if __name__ == '__main__':
     #     [1, 1, 1, 1, 1, 1, 1, 1]])
 
     gs1 = GameState(4, 'w', board1, board2)
+    GameState(4, 'w')
 
     print(gs1.move_list())
 
-# retrieve all w1 or w1k
-player = 'w1'
+
+
+    game = GameState()
+
+    print(game.boards['1'])
+    print(game.boards['2'])
+
+    player = ['w', 'b']
+
+
+
+    # len(to_move) = 2
+    # to_move =[{start_move: move,  # (x1,y1)
+    #         start_board: board,  # '1'
+    #         end_move: move,  # (x2,y2)
+    #         end_move: board  # '2'
+    #         },
+    #         {
+    #             start_move: move,
+    #             start_board: board,
+    #             end_move: move,
+    #             end_move: board
+    #         }]
+
+
