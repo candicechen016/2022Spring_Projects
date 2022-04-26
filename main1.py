@@ -4,6 +4,7 @@ Parallel-Universes Checkers.
 winninig:
 1. NO PIECES on both boards
 2. NO STEPS AND NO TRANFE on both boards
+
 rules:
 1. can only Transfer once
 2. can not capture at the transferring round
@@ -13,23 +14,53 @@ rules:
     b. move one piece of each board
 
 """
-import copy
+import random
 
 import numpy as np
-import random
+import copy
 
 
 class GameState:
-    def __init__(self, board_size, player, board1, board2):
+
+    def __init__(self, board_size, player, board1=None, board2=None,no_capture=0):
+
+        if board1 is None or board2 is None:
+            self.board1, self.board2 = self.initial_board(board_size)
+
         self.board1 = board1
         self.board2 = board2
         self.board_size = board_size
         self.player = player
         self.direction = 1 if self.player == 'w' else -1
         self.opponent = 'b' if self.player == 'w' else 'w'
-
+        self.no_capture=no_capture
         self.positions = self.get_positions(self.player)
-        self.opponent_position = self.get_positions(self.opponent)
+        self.opponent_positions = self.get_positions(self.opponent)
+
+    def initial_board(self, size):
+        rows_with_pieces = (size - 2) / 2
+        board = []
+        for i in list(range(size + 2)):
+            if i == 0 or i == size + 1:
+                board.append(['1'] * (size + 2))
+            elif i in [rows_with_pieces + 1, rows_with_pieces + 2]:
+                board.append(['1'] + ['.'] * size + ['1'])
+            else:
+                p = 'w1'
+                if i % 2 != 0:
+                    if i >= (size - rows_with_pieces):
+                        p = 'b1'
+                    board.append(['1'] + ['.', p] * (size // 2) + ['1'])
+                else:
+                    if i >= (size - rows_with_pieces):
+                        p = 'b1'
+                    board.append(['1'] + [p, '.'] * (size // 2) + ['1'])
+
+        b1 = np.array(board)
+        b = np.flip(b1, 1)
+        c = np.where(b == 'w1', 'w2', b)
+        b2 = np.where(c == 'b1', 'b2', c)
+        return b1, b2
 
     def get_positions(self, player):
         """
@@ -51,62 +82,229 @@ class GameState:
                            'positions2': np.argwhere(self.board2 == player + '2'),
                            'king_positions2': np.argwhere(self.board2 == player + '2k')}}
 
-    def get_move_state(self, row_dir_list, positions, board):
+    def get_one_move(self, row_dir_list, positions, board, board_num):
         one_move_board = []
-        one_move_list=[]
+        one_move_list = []
         for position in positions:
             for row_dir in row_dir_list:
                 next_row = position[0] + row_dir
-                for dir in [-1,1]:
+                for dir in [-1, 1]:
                     next_col = position[1] + dir
                     if board[next_row, next_col] == '.':
-                        next_one_move = self.update_board(position, [next_row, next_col], board, False)
+                        next_move = {'start_move': (position[0], position[1]), 'start_board': board_num,
+                                     'end_move': (next_row, next_col), 'end_board': board_num, 'capture': False}
+                        one_move_list.append(next_move)
+                        next_one_move = self.update_board_normal(next_move)
                         one_move_board.append(next_one_move)
-                        one_move_list.append([next_row, next_col])
                     if board[next_row, next_col][0] == self.opponent:
                         if board[next_row + row_dir, next_col + dir] == '.':
-                            next_capture_move = self.update_board(position, [next_row + row_dir, next_col + dir],
-                                                                      board, True)
+                            next_move = {'start_move': (position[0], position[1]), 'start_board': board_num,
+                                         'end_move': (next_row + row_dir, next_col + dir),
+                                         'end_board': board_num, 'capture': True}
+                            one_move_list.append(next_move)
+                            next_capture_move = self.update_board_normal(next_move)
                             one_move_board.append(next_capture_move)
-                            one_move_list.append([next_row + row_dir, next_col + dir])
-        return one_move_list,one_move_board
 
-    def get_two_move_state(self,one_move_list,one_move_board,row_dir):
-        two_move_board=[]
+        return one_move_list, one_move_board
+
+    def get_two_continuous_move(self, one_move_list, one_move_board, row_dir):
+        two_move_board = []
+        two_moves = []
         for i in range(len(one_move_list)):
-            _,sencond_move=self.get_move_state(row_dir,[one_move_list[i]],one_move_board[i])
-            two_move_board.append(sencond_move)
-        return two_move_board
+            second_moves, second_move_boards = self.get_one_move(row_dir, [one_move_list[i]['end_move']],
+                                                                 one_move_board[i], one_move_list[i]['end_board'])
+            if len(second_moves):
+                two_move_board.append(second_move_boards)
+                for second_move in second_moves:
+                    two_moves.append([one_move_list[i], second_move])
+        return two_moves, two_move_board
 
-    def update_board(self, position, next_position, board, capture):
-        board_temp = copy.deepcopy(board)
-        board_temp[position[0], position[1]] = '.'
-        board_temp[next_position[0], next_position[1]] = board[position[0], position[1]]  # change to king
-        if capture:
-            board_temp[position[0], position[1]] = '.'
-            board_temp[next_position[0], next_position[1]] = board[position[0], position[1]]
-            board_temp[int((position[0] + next_position[0]) / 2), int((position[1] + next_position[1]) / 2)] = '.'
+    def update_board_normal(self, move, make_move=False):
+        board = self.board1 if move['start_board'] == 1 else self.board2
+        if make_move:
+            board_temp = board
+        else:
+            board_temp = copy.deepcopy(board)
+        player = board[move['start_move'][0], move['start_move'][1]]
+        board_temp[move['start_move'][0], move['start_move'][1]] = '.'
+        if (player[0] == 'w' and move['end_move'][0] == self.board_size) or (
+                player[0] == 'b' and move['end_move'][0] == 1):
+            board_temp[move['end_move'][0], move['end_move'][1]] = player[:2] + 'k'  # change to king
+        else:
+            board_temp[move['end_move'][0], move['end_move'][1]] = player
+        if move['capture']:
+            board_temp[int((move['start_move'][0] + move['end_move'][0]) / 2), int(
+                (move['start_move'][1] + move['end_move'][1]) / 2)] = '.'
         return board_temp
 
+    def find_orthogonally_neighbors(self, piece_position, board):
+        x, y = piece_position
+        neighbors = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
+        empty = []
+        for n in neighbors:
+            if board[n] == '.':
+                empty.append(n)
+        return empty
+
+    def check_win(self,next_move):
+        #TODO: draw
+        has_pieces = 0
+
+        # condition 1: the player has NO STEPS and NO WAY to transfer to both boards
+        if not next_move:
+            print('c1winner:', game.opponent)
+            return True
+
+        for board_name in ['board1', 'board2']:
+            piece_positions = np.concatenate((self.positions[board_name]['positions1'],
+                                              self.positions[board_name]['positions2'],
+                                              self.positions[board_name]['king_positions1'],
+                                              self.positions[board_name]['king_positions2']))
+            # condition 2: the player has NO PIECES on Both boards
+            if piece_positions.size == 0:
+                has_pieces+=1
+                continue
+            print('has_pieces',has_pieces)
+        if has_pieces == 2:
+            print('c2winner:', game.opponent)
+            return True
+        for move in next_move:
+            if move['capture']==False:
+                self.no_capture+=1
+            else:
+                self.no_capture=0
+        # draw: no capture in 50 turns
+        if self.no_capture==100:
+            print('draw')
+            return True
+        return False
+
+    # def transfer_piece(self, position, next_position, board1, board2):
+    def transfer_piece(self, move_dict, make_move=False):
+
+        board1 = self.board1 if move_dict['start_board'] == 1 else self.board2
+        board2 = self.board1 if move_dict['end_board'] == 1 else self.board2
+
+        if make_move:
+            start_board = board1
+            end_board = board2
+        else:
+            start_board = copy.deepcopy(board1)
+            end_board = copy.deepcopy(board2)
+
+        start_move, end_move = move_dict['start_move'], move_dict['end_move']
+        player = board1[start_move[0], start_move[1]]
+        start_board[start_move[0], start_move[1]] = '.'
+        if (player[0] == 'w' and move_dict['end_move'][0] == self.board_size) or (
+                player[0] == 'b' and move_dict['end_move'][0] == 1):
+            end_board[move_dict['end_move'][0], move_dict['end_move'][1]] = player[:2] + 'k'  # change to king
+        else:
+            end_board[move_dict['end_move'][0], move_dict['end_move'][1]] = player
+
+
+        return start_board, end_board
+
+    def get_transferred_list(self, row_dir_list, positions, board, board_num):
+        end_board_num = 2 if board_num == 1 else 1
+        other_board = self.board2 if board_num == 1 else self.board1
+        transfer_move_list = []
+        transfer_board_list = []
+
+        for piece in positions:
+            list = self.find_orthogonally_neighbors(piece, other_board)
+            for move in list:
+                to_move = {'start_move': (piece[0], piece[1]), 'start_board': board_num, 'end_move': move,
+                           'end_board': end_board_num, 'capture': False}
+
+                new_start_board, new_end_board = self.transfer_piece(to_move)
+
+                second_move_list, second_move_board = self.get_one_move(row_dir_list, [move], new_end_board,
+                                                                        end_board_num)
+                if len(second_move_list):
+                    transfer_board_list.append(second_move_board)
+                    for second_move in second_move_list:
+                        transfer_move_list.append([to_move, second_move])
+        return transfer_move_list, transfer_board_list
 
     def move_list(self):
-        one_move_list_nomarl1,one_move_board_normal1=self.get_move_state( [self.direction],np.concatenate((self.positions['board1']['positions1'], self.positions['board1']['positions2'])),self.board1)
-        one_move_list_nomarl2,one_move_board_normal2=self.get_move_state([self.direction], np.concatenate((self.positions['board2']['positions1'], self.positions['board2']['positions2'])), self.board2)
-        one_move_list_king1,one_move_board_king1=self.get_move_state( [1,-1],np.concatenate((self.positions['board1']['king_positions1'], self.positions['board1']['king_positions2'])),self.board1)
-        one_move_list_king2,one_move_board_king2=self.get_move_state( [1,-1],np.concatenate((self.positions['board2']['king_positions1'], self.positions['board2']['king_positions2'])),self.board2)
-        two_move_board_normal1=self.get_two_move_state(one_move_list_nomarl1,one_move_board_normal1,[self.direction])
-        two_move_board_normal2 = self.get_two_move_state(one_move_list_nomarl2,one_move_board_normal2,[self.direction])
-        two_move_board_king1 = self.get_two_move_state(one_move_list_king1, one_move_board_king1,[1,-1])
-        two_move_board_king2 = self.get_two_move_state(one_move_list_king2, one_move_board_king2,[1,-1])
-        return {'board1':one_move_board_normal1+one_move_board_king1}
+        one_move_list_nomarl1, one_move_board_normal1 = self.get_one_move([self.direction], np.concatenate(
+            (self.positions['board1']['positions1'], self.positions['board1']['positions2'])), self.board1, 1)
+        one_move_list_nomarl2, one_move_board_normal2 = self.get_one_move([self.direction], np.concatenate(
+            (self.positions['board2']['positions1'], self.positions['board2']['positions2'])), self.board2, 2)
+        one_move_list_king1, one_move_board_king1 = self.get_one_move([1, -1], np.concatenate(
+            (self.positions['board1']['king_positions1'], self.positions['board1']['king_positions2'])), self.board1, 1)
+        one_move_list_king2, one_move_board_king2 = self.get_one_move([1, -1], np.concatenate(
+            (self.positions['board2']['king_positions1'], self.positions['board2']['king_positions2'])), self.board2, 2)
+        two_move_list_nomarl1, two_move_board_normal1 = self.get_two_continuous_move(one_move_list_nomarl1,
+                                                                                     one_move_board_normal1,
+                                                                                     [self.direction])
+        two_move_list_nomarl2, two_move_board_normal2 = self.get_two_continuous_move(one_move_list_nomarl2,
+                                                                                     one_move_board_normal2,
+                                                                                     [self.direction])
+        two_move_list_king1, two_move_board_king1 = self.get_two_continuous_move(one_move_list_king1,
+                                                                                 one_move_board_king1, [1, -1])
+        two_move_list_king2, two_move_board_king2 = self.get_two_continuous_move(one_move_list_king2,
+                                                                                 one_move_board_king2, [1, -1])
+        transfer_list_nomarl1, transfer_board_normal1 = self.get_transferred_list([self.direction],
+            self.positions['board1']['positions1'], self.board1, 1)
+        transfer_list_nomarl2, transfer_board_normal2 = self.get_transferred_list([self.direction],
+          self.positions['board2']['positions2'], self.board2, 2)
+        transfer_list_king1, transfer_board_king1 = self.get_transferred_list([1, -1],
+            self.positions['board1']['king_positions1'], self.board1, 1)
+        transfer_list_king2, transfer_board_king2 = self.get_transferred_list([1, -1],
+            self.positions['board2']['king_positions2'], self.board2, 2)
+        return {'one_move_each_board': {'board1': one_move_list_nomarl1 + one_move_list_king1,
+                                        'board2': one_move_list_nomarl2 + one_move_list_king2},
+                'two_moves_one_board': two_move_list_nomarl1 + two_move_list_nomarl2 + two_move_list_king1 +two_move_list_king2,
+                'transfer_move_board': transfer_list_nomarl1 + transfer_list_nomarl2 + transfer_list_king1 + transfer_list_king2}
+
+
+class Player:
+    def __init__(self, piece):
+        self.piece = piece
+        self.win_count =0
+        self.lose_count = 0
+        self.draw_count = 0
+
+    def get_next_move(next_move_options):
+        mode1_num = len(next_move_options['one_move_each_board']['board1']) * len(
+        next_move_options['one_move_each_board']['board2'])
+        mode2_num = len(next_move_options['two_moves_one_board'])
+        mode3_num = len(next_move_options['transfer_move_board'])
+        option_list = [1] * mode1_num + [2] * mode2_num + [3] * mode3_num
+        next_move = []
+        if option_list:
+            next_move_mode = random.choice(option_list)
+            if next_move_mode == 1:
+                next_move = [random.choice(next_move_options['one_move_each_board']['board1']),
+                                random.choice(next_move_options['one_move_each_board']['board2'])]
+            elif next_move_mode == 2:
+                    next_move = random.choice(next_move_options['two_moves_one_board'])
+            elif next_move_mode == 3:
+                    next_move = random.choice(next_move_options['transfer_move_board'])
+        return next_move
+
+
+
+class MinimaxPlayer:
+
+    def __init__(self, piece, ai=False, strategy=0):
+        self.piece = piece
+        self.win_count = 0
+        self.lose_count = 0
+        self.draw_count = 0
+
+    def minimax_moves(self, next_move_options):
+        pass
+
 
 
 
 if __name__ == '__main__':
     board1 = np.array([[1, 1, 1, 1, 1, 1],
                        [1, 'w1', '.', 'w1', '.', 1],
-                       [1, '.', 'b1', '.', '.', 1],
-                       [1, '.', '.', 'w1k', '.', 1],
+                       [1, '.', '.', '.', '.', 1],
+                       [1, '.', '.', '.', '.', 1],
                        [1, '.', 'b1', '.', 'b1', 1],
                        [1, 1, 1, 1, 1, 1]])
 
@@ -136,6 +334,87 @@ if __name__ == '__main__':
     #     [1, 'b2', '.', 'b2', '.', 'b2', '.', 1],
     #     [1, 1, 1, 1, 1, 1, 1, 1]])
 
-    gs1 = GameState(4, 'w', board1, board2)
 
-    print(gs1.move_list())
+seed=3
+random.seed(seed)
+
+def one_turn(player,game):
+    next_move_options = game.move_list()
+    next_move = player.next_move(next_move_options)
+    if game.check_win(next_move):
+        break
+    print('turn:', turn, 'player:', game.player, 'next_move:', next_move)
+    for move in next_move:
+        if move['start_board'] != move['end_board']:
+            new_board1, new_board2 = game.transfer_piece(move, make_move=True)
+        else:
+            if move['start_board'] == 1:
+                new_board1 = game.update_board_normal(move, make_move=True)
+                new_board2 = game.board2
+            else:
+                new_board2 = game.update_board_normal(move, make_move=True)
+                new_board1 = game.board1
+    print('=======')
+    print(new_board1)
+    print(new_board2)
+    next_player = 'b' if game.player == 'w' else 'w'
+    game = GameState(4, next_player, new_board1, new_board2, game.no_capture)
+
+
+
+def play_game(player):
+    turn=1
+    game = GameState(4, player.piece, board1, board2,0)
+    while True:
+        turn+=1
+        print(turn)
+        next_move_options = game.move_list()
+        next_move =player.next_move(next_move_options)
+        if game.check_win(next_move):
+            break
+        print('turn:', turn,'player:', game.player, 'next_move:', next_move)
+        for move in next_move:
+            if move['start_board'] != move['end_board']:
+                new_board1, new_board2 = game.transfer_piece(move, make_move=True)
+            else:
+                if move['start_board'] == 1:
+                    new_board1 = game.update_board_normal(move, make_move=True)
+                    new_board2 = game.board2
+                else:
+                    new_board2 = game.update_board_normal(move, make_move=True)
+                    new_board1 = game.board1
+        print('=======')
+        print(new_board1)
+        print(new_board2)
+        next_player = 'b' if game.player == 'w' else 'w'
+        game = GameState(4, next_player, new_board1, new_board2, game.no_capture)
+    print("game over")
+
+# {'one_move_each_board': {'board1': [{'start_move': (1, 1), 'start_board': 1, 'end_move': (3, 3), 'end_board': 1, 'capture': True}, {'start_move': (1, 3), 'start_board': 1, 'end_move': (3, 1), 'end_board': 1, 'capture': True}, {'start_move': (1, 3), 'start_board': 1, 'end_move': (2, 4), 'end_board': 1, 'capture': False}, {'start_move': (3, 4), 'start_board': 1, 'end_move': (4, 3), 'end_board': 1, 'capture': False}], 'board2': [{'start_move': (1, 2), 'start_board': 2, 'end_move': (2, 1), 'end_board': 2, 'capture': False}, {'start_move': (1, 2), 'start_board': 2, 'end_move': (2, 3), 'end_board': 2, 'capture': False}, {'start_move': (1, 4), 'start_board': 2, 'end_move': (2, 3), 'end_board': 2, 'capture': False}]}, 'two_moves_one_board': [[{'start_move': (1, 3), 'start_board': 1, 'end_move': (2, 4), 'end_board': 1, 'capture': False}, {'start_move': (2, 4), 'start_board': 1, 'end_move': (3, 3), 'end_board': 1, 'capture': False}], [{'start_move': (1, 2), 'start_board': 2, 'end_move': (2, 1), 'end_board': 2, 'capture': False}, {'start_move': (2, 1), 'start_board': 2, 'end_move': (3, 2), 'end_board': 2, 'capture': False}], [{'start_move': (1, 2), 'start_board': 2, 'end_move': (2, 3), 'end_board': 2, 'capture': False}, {'start_move': (2, 3), 'start_board': 2, 'end_move': (3, 2), 'end_board': 2, 'capture': False}], [{'start_move': (1, 2), 'start_board': 2, 'end_move': (2, 3), 'end_board': 2, 'capture': False}, {'start_move': (2, 3), 'start_board': 2, 'end_move': (3, 4), 'end_board': 2, 'capture': False}], [{'start_move': (1, 4), 'start_board': 2, 'end_move': (2, 3), 'end_board': 2, 'capture': False}, {'start_move': (2, 3), 'start_board': 2, 'end_move': (3, 2), 'end_board': 2, 'capture': False}], [{'start_move': (1, 4), 'start_board': 2, 'end_move': (2, 3), 'end_board': 2, 'capture': False}, {'start_move': (2, 3), 'start_board': 2, 'end_move': (3, 4), 'end_board': 2, 'capture': False}]], 'transfer_move_board': [[{'start_move': (1, 1), 'start_board': 1, 'end_move': (2, 1), 'end_board': 2, 'capture': False}, {'start_move': (2, 1), 'start_board': 2, 'end_move': (3, 2), 'end_board': 2, 'capture': False}], [{'start_move': (1, 3), 'start_board': 1, 'end_move': (2, 3), 'end_board': 2, 'capture': False}, {'start_move': (2, 3), 'start_board': 2, 'end_move': (3, 2), 'end_board': 2, 'capture': False}], [{'start_move': (1, 3), 'start_board': 1, 'end_move': (2, 3), 'end_board': 2, 'capture': False}, {'start_move': (2, 3), 'start_board': 2, 'end_move': (3, 4), 'end_board': 2, 'capture': False}], [{'start_move': (3, 4), 'start_board': 1, 'end_move': (2, 4), 'end_board': 2, 'capture': False}, {'start_move': (2, 4), 'start_board': 2, 'end_move': (3, 3), 'end_board': 2, 'capture': False}], [{'start_move': (3, 4), 'start_board': 1, 'end_move': (3, 3), 'end_board': 2, 'capture': False}, {'start_move': (3, 3), 'start_board': 2, 'end_move': (4, 2), 'end_board': 2, 'capture': False}], [{'start_move': (3, 4), 'start_board': 1, 'end_move': (3, 3), 'end_board': 2, 'capture': False}, {'start_move': (3, 3), 'start_board': 2, 'end_move': (4, 4), 'end_board': 2, 'capture': False}], [{'start_move': (1, 4), 'start_board': 2, 'end_move': (2, 4), 'end_board': 1, 'capture': False}, {'start_move': (2, 4), 'start_board': 1, 'end_move': (3, 3), 'end_board': 1, 'capture': False}]]}
+# one_move_each_board {'board1': [{'start_move': (1, 1), 'start_board': 1, 'end_move': (3, 3), 'end_board': 1, 'capture': True}, {'start_move': (1, 3), 'start_board': 1, 'end_move': (3, 1), 'end_board': 1, 'capture': True}, {'start_move': (1, 3), 'start_board': 1, 'end_move': (2, 4), 'end_board': 1, 'capture': False}, {'start_move': (3, 4), 'start_board': 1, 'end_move': (4, 3), 'end_board': 1, 'capture': False}], 'board2': [{'start_move': (1, 2), 'start_board': 2, 'end_move': (2, 1), 'end_board': 2, 'capture': False}, {'start_move': (1, 2), 'start_board': 2, 'end_move': (2, 3), 'end_board': 2, 'capture': False}, {'start_move': (1, 4), 'start_board': 2, 'end_move': (2, 3), 'end_board': 2, 'capture': False}]}
+# two_moves_one_board [[{'start_move': (1, 3), 'start_board': 1, 'end_move': (2, 4), 'end_board': 1, 'capture': False}, {'start_move': (2, 4), 'start_board': 1, 'end_move': (3, 3), 'end_board': 1, 'capture': False}], [{'start_move': (1, 2), 'start_board': 2, 'end_move': (2, 1), 'end_board': 2, 'capture': False}, {'start_move': (2, 1), 'start_board': 2, 'end_move': (3, 2), 'end_board': 2, 'capture': False}], [{'start_move': (1, 2), 'start_board': 2, 'end_move': (2, 3), 'end_board': 2, 'capture': False}, {'start_move': (2, 3), 'start_board': 2, 'end_move': (3, 2), 'end_board': 2, 'capture': False}], [{'start_move': (1, 2), 'start_board': 2, 'end_move': (2, 3), 'end_board': 2, 'capture': False}, {'start_move': (2, 3), 'start_board': 2, 'end_move': (3, 4), 'end_board': 2, 'capture': False}], [{'start_move': (1, 4), 'start_board': 2, 'end_move': (2, 3), 'end_board': 2, 'capture': False}, {'start_move': (2, 3), 'start_board': 2, 'end_move': (3, 2), 'end_board': 2, 'capture': False}], [{'start_move': (1, 4), 'start_board': 2, 'end_move': (2, 3), 'end_board': 2, 'capture': False}, {'start_move': (2, 3), 'start_board': 2, 'end_move': (3, 4), 'end_board': 2, 'capture': False}]]
+# transfer_move_board [[{'start_move': (1, 1), 'start_board': 1, 'end_move': (2, 1), 'end_board': 2, 'capture': False}, {'start_move': (2, 1), 'start_board': 2, 'end_move': (3, 2), 'end_board': 2, 'capture': False}], [{'start_move': (1, 3), 'start_board': 1, 'end_move': (2, 3), 'end_board': 2, 'capture': False}, {'start_move': (2, 3), 'start_board': 2, 'end_move': (3, 2), 'end_board': 2, 'capture': False}], [{'start_move': (1, 3), 'start_board': 1, 'end_move': (2, 3), 'end_board': 2, 'capture': False}, {'start_move': (2, 3), 'start_board': 2, 'end_move': (3, 4), 'end_board': 2, 'capture': False}], [{'start_move': (3, 4), 'start_board': 1, 'end_move': (2, 4), 'end_board': 2, 'capture': False}, {'start_move': (2, 4), 'start_board': 2, 'end_move': (3, 3), 'end_board': 2, 'capture': False}], [{'start_move': (3, 4), 'start_board': 1, 'end_move': (3, 3), 'end_board': 2, 'capture': False}, {'start_move': (3, 3), 'start_board': 2, 'end_move': (4, 2), 'end_board': 2, 'capture': False}], [{'start_move': (3, 4), 'start_board': 1, 'end_move': (3, 3), 'end_board': 2, 'capture': False}, {'start_move': (3, 3), 'start_board': 2, 'end_move': (4, 4), 'end_board': 2, 'capture': False}], [{'start_move': (1, 4), 'start_board': 2, 'end_move': (2, 4), 'end_board': 1, 'capture': False}, {'start_move': (2, 4), 'start_board': 1, 'end_move': (3, 3), 'end_board': 1, 'capture': False}]]
+
+
+# game = GameState()
+#
+# print(game.boards['1'])
+# print(game.boards['2'])
+
+# player = ['w', 'b']
+#
+# player[0].make_move()
+# if game.check_win(player[0])
+
+# len(to_move) = 2
+# to_move =[{start_move: move,  # (x1,y1)
+#         start_board: board,  # '1'
+#         end_move: move,  # (x2,y2)
+#         end_move: board  # '2'
+#         },
+#         {
+#             start_move: move,
+#             start_board: board,
+#             end_move: move,
+#             end_move: board
+#         }]
