@@ -21,6 +21,7 @@ import copy
 
 
 class GameState:
+
     def __init__(self, board_size, player, board1=None, board2=None):
 
         if board1 is None or board2 is None:
@@ -126,9 +127,9 @@ class GameState:
             board_temp = copy.deepcopy(board)
         player = board[move['start_move'][0], move['start_move'][1]]
         board_temp[move['start_move'][0], move['start_move'][1]] = '.'
-        if (player == 'w1' and move['end_move'][0] == self.board_size) or (
-                player == 'b1' and move['end_move'][0] == 1):
-            board_temp[move['end_move'][0], move['end_move'][1]] = player + 'k'  # change to king
+        if (player[0] == 'w' and move['end_move'][0] == self.board_size) or (
+                player[0] == 'b' and move['end_move'][0] == 1):
+            board_temp[move['end_move'][0], move['end_move'][1]] = player[:2] + 'k'  # change to king
         else:
             board_temp[move['end_move'][0], move['end_move'][1]] = player
         if move['capture']:
@@ -170,31 +171,33 @@ class GameState:
 
     def check_win(self):
         #TODO: draw
-        has_pieces = []
-        has_move = []
+        has_pieces = 0
+
         for board_name in ['board1', 'board2']:
             all_valid = []
             # for piece in self.player:
-            piece_positions = np.concatenate((self.opponent_positions[board_name]['positions1'],
-                                              self.opponent_positions[board_name]['positions2'],
-                                              self.opponent_positions[board_name]['king_positions1'],
-                                              self.opponent_positions[board_name]['king_positions2']))
+            piece_positions = np.concatenate((self.positions[board_name]['positions1'],
+                                              self.positions[board_name]['positions2'],
+                                              self.positions[board_name]['king_positions1'],
+                                              self.positions[board_name]['king_positions2']))
             # condition 1: the player has NO PIECES on Both boards
-            print(piece_positions.size)
+            print('size',piece_positions.size)
             if piece_positions.size == 0:
-                has_pieces.append(False)
+                print('----------------------------')
+                has_pieces+=1
                 continue
-            else:
-                # condition 2: the player has NO STEPS and NO WAY to transfer to both boards
-                for position in piece_positions:
-                    board = self.board1 if board_name == 'board1' else self.board2
-                    valid_transfer_squares = self.find_orthogonally_neighbors(position, board)
-                    all_valid += valid_transfer_squares
-                if not all_valid:
-                    has_move.append(False)
-            if has_pieces == [False, False] or has_move == [False, False]:
-                return True
-            return False
+            # else:
+            #     # condition 2: the player has NO STEPS and NO WAY to transfer to both boards
+            #     for position in piece_positions:
+            #         board = self.board1 if board_name == 'board1' else self.board2
+            #         valid_transfer_squares = self.find_orthogonally_neighbors(position, board)
+            #         all_valid += valid_transfer_squares
+            #     if not all_valid:
+            #         has_move.append(False)
+            print('has_pieces',has_pieces)
+        if has_pieces == 2:
+            return True
+        return False
 
     # def transfer_piece(self, position, next_position, board1, board2):
     def transfer_piece(self, move_dict, make_move=False):
@@ -216,9 +219,9 @@ class GameState:
         player = board1[start_move[0], start_move[1]]
         start_board[start_move[0], start_move[1]] = '.'
         # end_board[end_move[0], end_move[1]] = board1[start_move[0], start_move[1]]
-        if (player == 'w1' and move_dict['end_move'][0] == self.board_size) or (
-                player == 'b1' and move_dict['end_move'][0] == 1):
-            end_board[move_dict['end_move'][0], move_dict['end_move'][1]] = player + 'k'  # change to king
+        if (player[0] == 'w' and move_dict['end_move'][0] == self.board_size) or (
+                player[0] == 'b' and move_dict['end_move'][0] == 1):
+            end_board[move_dict['end_move'][0], move_dict['end_move'][1]] = player[:2] + 'k'  # change to king
         else:
             end_board[move_dict['end_move'][0], move_dict['end_move'][1]] = player
 
@@ -294,7 +297,7 @@ class GameState:
 
 def next_random_moves(next_move_options):
     mode1_num = len(next_move_options['one_move_each_board']['board1']) * len(
-        next_move_options['one_move_each_board']['board2'])
+    next_move_options['one_move_each_board']['board2'])
     mode2_num = len(next_move_options['two_moves_one_board'])
     mode3_num = len(next_move_options['transfer_move_board'])
     option_list = [1] * mode1_num + [2] * mode2_num + [3] * mode3_num
@@ -315,8 +318,8 @@ def next_random_moves(next_move_options):
 if __name__ == '__main__':
     board1 = np.array([[1, 1, 1, 1, 1, 1],
                        [1, 'w1', '.', 'w1', '.', 1],
-                       [1, '.', 'b1', '.', '.', 1],
-                       [1, '.', '.', '.', 'w1', 1],
+                       [1, '.', '.', '.', '.', 1],
+                       [1, '.', '.', '.', '.', 1],
                        [1, '.', 'b1', '.', 'b1', 1],
                        [1, 1, 1, 1, 1, 1]])
 
@@ -345,29 +348,37 @@ if __name__ == '__main__':
     #     [1, '.', 'b2', '.', 'b2', '.', 'b2', 1],
     #     [1, 'b2', '.', 'b2', '.', 'b2', '.', 1],
     #     [1, 1, 1, 1, 1, 1, 1, 1]])
-
+    seed=3
+    random.seed(seed)
     player = 'w'
-    gs1 = GameState(4, 'w', board1, board2)
-    # next_move_options = gs1.move_list()
-    # for key, j in next_move_options.items():
-    #     print(key, j)
-
-
-
-
-    game = gs1
+    game = GameState(4, 'w', board1, board2)
     game_over = False
+    no_capture=0
+    turn=1
     while True:
+        turn+=1
+        print(turn)
         if game.check_win():
+            print('c1winner:', game.opponent)
             break
         next_move_options = game.move_list()
         next_move = next_random_moves(next_move_options)
+        # condition 2: the player has NO STEPS and NO WAY to transfer to both boards
         if not next_move:
+            print('c2winner:',game.opponent)
             break
-        print('player', game.player, 'next_move', next_move)
+        # draw: no capture in 50 turns
+        if no_capture==100:
+            print('draw')
+            break
+        print('turn:', turn,'player:', game.player, 'next_move:', next_move)
         for move in next_move:
+            if move['capture']==False:
+                no_capture+=1
+            else:
+                no_capture=0
             if move['start_board'] != move['end_board']:
-                new_board1, new_board2 = gs1.transfer_piece(move, make_move=True)
+                new_board1, new_board2 = game.transfer_piece(move, make_move=True)
             else:
                 if move['start_board'] == 1:
                     new_board1 = game.update_board_normal(move, make_move=True)
@@ -375,14 +386,11 @@ if __name__ == '__main__':
                 else:
                     new_board2 = game.update_board_normal(move, make_move=True)
                     new_board1 = game.board1
-                print('=======')
-                print(new_board1)
-                print(new_board2)
-
+        print('=======')
+        print(new_board1)
+        print(new_board2)
         next_player = 'b' if game.player == 'w' else 'w'
-        gs_new = GameState(4, next_player, new_board1, new_board2)
-
-        game = gs_new
+        game = GameState(4, next_player, new_board1, new_board2)
     print("game over")
 
 
