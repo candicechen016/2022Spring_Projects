@@ -295,24 +295,75 @@ class GameState:
                 'transfer_move_board': transfer_list_nomarl1 + transfer_list_nomarl2 + transfer_list_king1 + transfer_list_king2}
 
 
-def next_random_moves(next_move_options):
-    mode1_num = len(next_move_options['one_move_each_board']['board1']) * len(
-    next_move_options['one_move_each_board']['board2'])
-    mode2_num = len(next_move_options['two_moves_one_board'])
-    mode3_num = len(next_move_options['transfer_move_board'])
-    option_list = [1] * mode1_num + [2] * mode2_num + [3] * mode3_num
-    next_move = []
-    if option_list:
-        next_move_mode = random.choice(option_list)
-        if next_move_mode == 1:
-            next_move = [random.choice(next_move_options['one_move_each_board']['board1']),
-                         random.choice(next_move_options['one_move_each_board']['board2'])]
-        elif next_move_mode == 2:
-            next_move = random.choice(next_move_options['two_moves_one_board'])
-        elif next_move_mode == 3:
-            next_move = random.choice(next_move_options['transfer_move_board'])
 
-    return next_move
+
+class RandomPlayer:
+
+    def __init__(self, piece):
+        self.piece = piece
+        self.win_count =0
+        self.lose_count = 0
+        self.draw_count = 0
+
+
+    def next_random_moves(self, next_move_options):
+        mode1_num = len(next_move_options['one_move_each_board']['board1']) * len(
+            next_move_options['one_move_each_board']['board2'])
+        mode2_num = len(next_move_options['two_moves_one_board'])
+        mode3_num = len(next_move_options['transfer_move_board'])
+        option_list = [1] * mode1_num + [2] * mode2_num + [3] * mode3_num
+        next_move = []
+        if option_list:
+            next_move_mode = random.choice(option_list)
+            if next_move_mode == 1:
+                next_move = [random.choice(next_move_options['one_move_each_board']['board1']),
+                             random.choice(next_move_options['one_move_each_board']['board2'])]
+            elif next_move_mode == 2:
+                next_move = random.choice(next_move_options['two_moves_one_board'])
+            elif next_move_mode == 3:
+                next_move = random.choice(next_move_options['transfer_move_board'])
+
+        return next_move
+
+
+    def next_move(self, strateg):
+        pass
+
+
+class MinimaxPlayer:
+
+    def __init__(self, piece, ai=False, strategy=0):
+        self.piece = piece
+        self.win_count = 0
+        self.lose_count = 0
+        self.draw_count = 0
+
+    def next_random_moves(self, next_move_options):
+        mode1_num = len(next_move_options['one_move_each_board']['board1']) * len(
+            next_move_options['one_move_each_board']['board2'])
+        mode2_num = len(next_move_options['two_moves_one_board'])
+        mode3_num = len(next_move_options['transfer_move_board'])
+        option_list = [1] * mode1_num + [2] * mode2_num + [3] * mode3_num
+        next_move = []
+        if option_list:
+            next_move_mode = random.choice(option_list)
+            if next_move_mode == 1:
+                next_move = [random.choice(next_move_options['one_move_each_board']['board1']),
+                             random.choice(next_move_options['one_move_each_board']['board2'])]
+            elif next_move_mode == 2:
+                next_move = random.choice(next_move_options['two_moves_one_board'])
+            elif next_move_mode == 3:
+                next_move = random.choice(next_move_options['transfer_move_board'])
+
+        return next_move
+
+    def minimax_moves(self, next_move_options):
+        pass
+
+    def next_move(self, strateg):
+
+
+
 
 
 if __name__ == '__main__':
@@ -348,13 +399,24 @@ if __name__ == '__main__':
     #     [1, '.', 'b2', '.', 'b2', '.', 'b2', 1],
     #     [1, 'b2', '.', 'b2', '.', 'b2', '.', 1],
     #     [1, 1, 1, 1, 1, 1, 1, 1]])
+
+
     seed=3
     random.seed(seed)
-    player = 'w'
-    game = GameState(4, 'w', board1, board2)
-    game_over = False
+    # player = 'w'
+    piece = 'w'
+
+
+    # game = GameState(4, 'w', board1, board2)
+    # game_over = False
     no_capture=0
     turn=1
+    # game = PlayGame()
+
+    player1 = RandomPlayer('w')
+    player2 = RandomPlayer('b')
+    game = GameState(4, player1.piece, board1, board2)
+    current_player = player1
     while True:
         turn+=1
         print(turn)
@@ -362,7 +424,9 @@ if __name__ == '__main__':
             print('c1winner:', game.opponent)
             break
         next_move_options = game.move_list()
-        next_move = next_random_moves(next_move_options)
+        next_move = current_player.next_move(next_move_options)
+
+
         # condition 2: the player has NO STEPS and NO WAY to transfer to both boards
         if not next_move:
             print('c2winner:',game.opponent)
@@ -389,7 +453,7 @@ if __name__ == '__main__':
         print('=======')
         print(new_board1)
         print(new_board2)
-        next_player = 'b' if game.player == 'w' else 'w'
+        next_player = player2.piece if game.player == 'w' else 'w'
         game = GameState(4, next_player, new_board1, new_board2)
     print("game over")
 
