@@ -37,35 +37,41 @@ class Boards:
                 pygame.draw.rect(win, RED, ((col+ROWS+2) * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
 
     def create_board(self):
-        for row in range(ROWS):
-            self.board1.append([])
-            self.board2.append([])
-            for col in range(ROWS):
-                if col%2==((row+1)%2):
-                    if row<3:
+        self.board1.append([1] * (ROWS + 2))
+        self.board2.append([1] * (ROWS + 2))
+        for row in range(1,ROWS+1):
+            self.board1.append([1])
+            self.board2.append([1])
+            for col in range(1,ROWS+1):
+                if col%2==(row%2):
+                    if row<4:
                         self.board1[row].append(Piece(row,col,WHITE,1))
-                    elif row>4:
+                    elif row>5:
                         self.board1[row].append(Piece(row,col,BLACK,1))
                     else:
                         self.board1[row].append(0)
                 else:
                     self.board1[row].append(0)
-                if col % 2 == (row % 2):
-                    if row<3:
+                if col % 2 == ((row+1) % 2):
+                    if row<4:
                         self.board2[row].append(Piece(row,col+ROWS+2,WHITE,2))
-                    elif row>4:
+                    elif row>5:
                         self.board2[row].append(Piece(row,col+ROWS+2,BLACK,2))
                     else:
                         self.board2[row].append(0)
                 else:
                     self.board2[row].append(0)
+            self.board1[row].append(1)
+            self.board2[row].append(1)
+        self.board1.append([1] * (ROWS + 2))
+        self.board2.append([1] * (ROWS + 2))
 
     def draw_board(self,win):
         self.draw_grids(win)
         print(self.board1)
         print(self.board2)
-        for row in range(ROWS):
-            for col in range(ROWS):
+        for row in range(1,ROWS+1):
+            for col in range(1,ROWS+1):
                 piece1 = self.board1[row][col]
                 piece2 = self.board2[row][col]
                 if piece1 !=0:
@@ -84,17 +90,17 @@ class Piece:
         self.row = row
         self.col = col
         self.color = color
-        self.king = True
+        self.king = False
         self.x = 0
         self.y = 0
         self.calc_pos()
-        self.direction=-1 if self.color==BLACK else 1
+        self.direction=[-1] if self.color==BLACK else [1]
         if self.king:
             self.direction = [-1, 1]
 
     def calc_pos(self):
-        self.x = SQUARE_SIZE * self.col + SQUARE_SIZE // 2
-        self.y = SQUARE_SIZE * self.row + SQUARE_SIZE // 2
+        self.x = SQUARE_SIZE * (self.col-1) + SQUARE_SIZE // 2
+        self.y = SQUARE_SIZE * (self.row-1)+ SQUARE_SIZE // 2
 
     def make_king(self):
         self.king = True
@@ -119,17 +125,18 @@ class Piece:
 
 
 
-def main():
-    run=True
-    boards=Boards()
-    clock = pygame.time.Clock()
+# def main():
+#     run=True
+#     boards=Boards()
 #
-    while run:
-        clock.tick(FPS)
-        for event in pygame.event.get():
-             if event.type==pygame.QUIT:
-                 run=False
-        boards.draw_board(WIN)
-        pygame.display.update()
-    pygame.quit()
-main()
+#     clock = pygame.time.Clock()
+# #
+#     while run:
+#         clock.tick(FPS)
+#         for event in pygame.event.get():
+#              if event.type==pygame.QUIT:
+#                  run=False
+#         boards.draw_board(WIN)
+#         pygame.display.update()
+#     pygame.quit()
+# main()
