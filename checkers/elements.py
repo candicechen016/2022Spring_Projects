@@ -1,34 +1,14 @@
-"""
-UI reference: https://github.com/techwithtim/Python-Checkers-AI/blob/master/checkers/board.py
-"""
-
+#refer
 import pygame
 
-WIDTH, HEIGHT = 400, 400
-# ROWS, COLS = 8, 18
-ROWS, COLS = 4, 10
-SQUARE_SIZE = HEIGHT//ROWS
+from checkers.cons import BLUE, RED, ROWS, SQUARE_SIZE, WHITE, BLACK, GOLD, SILVER, CROWN
 
-# rgb
-RED = (255, 0, 0)
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-BLUE = (0, 0, 255)
-GOLD=(255,215,0)
-SILVER=(192,192,192)
-YELLOW=(0,128,128)
-GREEN=(0, 255, 0)
-
-CROWN = pygame.transform.scale(pygame.image.load('assets/crown.png'), (20, 10))
-
-WIN= pygame.display.set_mode((WIDTH*2+2*SQUARE_SIZE, HEIGHT))
-FPS=60
 
 class Boards:
     def __init__(self):
         self.board1=[]
         self.board2=[]
-        self.w_left = self.b_left = 2
+        self.w_left = self.b_left = (ROWS//2-1)*ROWS//2
         self.w_king_left = self.b_king_left = 0
         self.create_board()
 
@@ -49,9 +29,9 @@ class Boards:
             self.board2.append([1])
             for col in range(1,ROWS+1):
                 if col%2==(row%2):
-                    if row==1:
+                    if row<ROWS//2:
                         self.board1[row].append(Piece(row,col,WHITE,1))
-                    elif row==4:
+                    elif row>ROWS//2+1:
                         self.board1[row].append(Piece(row,col,BLACK,1))
                     else:
                         self.board1[row].append(0)
@@ -59,10 +39,10 @@ class Boards:
                     self.board1[row].append(0)
                 if col % 2 == ((row+1) % 2):
                     # if row<4:
-                    if row==1:
+                    if row<ROWS//2:
                         self.board2[row].append(Piece(row,col,WHITE,2))
                     # elif row>5:
-                    elif row==4:
+                    elif row>ROWS//2+1:
                         self.board2[row].append(Piece(row,col,BLACK,2))
                     else:
                         self.board2[row].append(0)
@@ -130,24 +110,3 @@ class Piece:
 
     def __repr__(self):
         return str(self.sign)+str(self.board_num)+str(self.king)
-
-
-
-
-
-def main():
-    run=True
-    boards=Boards()
-
-    clock = pygame.time.Clock()
-#
-    while run:
-        clock.tick(FPS)
-        for event in pygame.event.get():
-             if event.type==pygame.QUIT:
-                 run=False
-        boards.draw_board(WIN)
-        pygame.display.update()
-
-    pygame.quit()
-main()

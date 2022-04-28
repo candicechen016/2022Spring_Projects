@@ -1,6 +1,6 @@
 import numpy as np
 import random
-from main import GameState, randomPlayer
+from draft.initial import GameState, randomPlayer
 
 
 def initial_board(size):
