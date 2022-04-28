@@ -5,7 +5,8 @@ UI reference: https://github.com/techwithtim/Python-Checkers-AI/blob/master/chec
 import pygame
 
 WIDTH, HEIGHT = 400, 400
-ROWS, COLS = 8, 18
+# ROWS, COLS = 8, 18
+ROWS, COLS = 4, 10
 SQUARE_SIZE = HEIGHT//ROWS
 
 # rgb
@@ -44,19 +45,21 @@ class Boards:
             self.board2.append([1])
             for col in range(1,ROWS+1):
                 if col%2==(row%2):
-                    if row<4:
+                    if row==1:
                         self.board1[row].append(Piece(row,col,WHITE,1))
-                    elif row>5:
+                    elif row==4:
                         self.board1[row].append(Piece(row,col,BLACK,1))
                     else:
                         self.board1[row].append(0)
                 else:
                     self.board1[row].append(0)
                 if col % 2 == ((row+1) % 2):
-                    if row<4:
-                        self.board2[row].append(Piece(row,col+ROWS+2,WHITE,2))
-                    elif row>5:
-                        self.board2[row].append(Piece(row,col+ROWS+2,BLACK,2))
+                    # if row<4:
+                    if row==1:
+                        self.board2[row].append(Piece(row,col,WHITE,2))
+                    # elif row>5:
+                    elif row==4:
+                        self.board2[row].append(Piece(row,col,BLACK,2))
                     else:
                         self.board2[row].append(0)
                 else:
@@ -68,8 +71,6 @@ class Boards:
 
     def draw_board(self,win):
         self.draw_grids(win)
-        print(self.board1)
-        print(self.board2)
         for row in range(1,ROWS+1):
             for col in range(1,ROWS+1):
                 piece1 = self.board1[row][col]
@@ -99,8 +100,12 @@ class Piece:
             self.direction = [-1, 1]
 
     def calc_pos(self):
-        self.x = SQUARE_SIZE * (self.col-1) + SQUARE_SIZE // 2
-        self.y = SQUARE_SIZE * (self.row-1)+ SQUARE_SIZE // 2
+        self.y = SQUARE_SIZE * (self.row - 1) + SQUARE_SIZE // 2
+        if self.board_num==1:
+            self.x = SQUARE_SIZE * (self.col-1) + SQUARE_SIZE // 2
+        else:
+            self.x = SQUARE_SIZE * (self.col+ROWS+1) + SQUARE_SIZE // 2
+
 
     def make_king(self):
         self.king = True
@@ -125,18 +130,18 @@ class Piece:
 
 
 
-# def main():
-#     run=True
-#     boards=Boards()
+def main():
+    run=True
+    boards=Boards()
+
+    clock = pygame.time.Clock()
 #
-#     clock = pygame.time.Clock()
-# #
-#     while run:
-#         clock.tick(FPS)
-#         for event in pygame.event.get():
-#              if event.type==pygame.QUIT:
-#                  run=False
-#         boards.draw_board(WIN)
-#         pygame.display.update()
-#     pygame.quit()
-# main()
+    while run:
+        clock.tick(FPS)
+        for event in pygame.event.get():
+             if event.type==pygame.QUIT:
+                 run=False
+        boards.draw_board(WIN)
+        pygame.display.update()
+    pygame.quit()
+main()
