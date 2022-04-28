@@ -16,6 +16,8 @@ BLACK = (0, 0, 0)
 BLUE = (0, 0, 255)
 GOLD=(255,215,0)
 SILVER=(192,192,192)
+YELLOW=(0,128,128)
+GREEN=(0, 255, 0)
 
 CROWN = pygame.transform.scale(pygame.image.load('assets/crown.png'), (20, 10))
 
@@ -26,6 +28,8 @@ class Boards:
     def __init__(self):
         self.board1=[]
         self.board2=[]
+        self.w_left = self.b_left = 2
+        self.w_king_left = self.b_king_left = 0
         self.create_board()
 
     def draw_grids(self,win):
@@ -80,8 +84,6 @@ class Boards:
                 if piece2 !=0:
                     piece2.draw(win)
 
-
-
 class Piece:
     PADDING = 11
     OUTLINE = 3
@@ -91,6 +93,7 @@ class Piece:
         self.row = row
         self.col = col
         self.color = color
+        self.sign='w' if self.color==WHITE else 'b'
         self.king = False
         self.x = 0
         self.y = 0
@@ -126,7 +129,9 @@ class Piece:
         self.calc_pos()
 
     def __repr__(self):
-        return str(self.color)
+        return str(self.sign)+str(self.board_num)+str(self.king)
+
+
 
 
 
@@ -143,5 +148,6 @@ def main():
                  run=False
         boards.draw_board(WIN)
         pygame.display.update()
+
     pygame.quit()
 main()
