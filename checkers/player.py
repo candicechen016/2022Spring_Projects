@@ -1,17 +1,19 @@
+"""
+Player module
+"""
+
+
 import random
 from copy import deepcopy
 
 import pygame
-from numpy.ma import copy
-
 from checkers.cons import GREEN, SQUARE_SIZE, ROWS, WHITE, BLACK
-from checkers.elements import Boards
-from checkers.gameState import GameState
+
 
 
 class randomPlayer:
     def __init__(self, color):
-        self.plyer_tag = 'random'
+        self.player_tag = 'Random'
         self.win_count = 0
         self.color = color
 
@@ -37,7 +39,7 @@ class randomPlayer:
 class MinimaxPlayer:
 
     def __init__(self, piece, strategy, depth):
-        self.plyer_tag = 'ai'
+        self.player_tag = 'Minimax_{}[{}]'.format(strategy, depth)
         self.color = piece
         self.win_count = 0
         self.lose_count = 0
@@ -153,6 +155,7 @@ def simulate_move(game, next_move,player):
 
 class humanPlayer:
     def __init__(self,win,gs):
+        self.player_tag = "Human"
         self.win=win
         self.gs=gs
         self.selected = None

@@ -1,18 +1,5 @@
 """
-Parallel-Universes Checkers.
-
-winninig:
-1. NO PIECES on both boards
-2. NO STEPS AND NO TRANFE on both boards
-
-rules:
-1. can only Transfer once
-2. can not capture at the transferring round
-3. only transfer to an empty square and must go to an orthogonally-adjacent square
-4. Make Moves:
-    a. move one piece at the same universe two turns
-    b. move one piece of each board
-
+Game state module.
 """
 
 import copy

@@ -1,31 +1,51 @@
-# 2022 Spring Projects
+# Parallel-Universes Checkers
 
-Each project from this semester is a public fork linked from this repository.  This is just one of the many assignments students worked on for the course, but this is the *only* one they are permitted to publish openly.
+#### Authors: Yawen Deng, Candice Chen
 
-## Final Project Expectations:
+## Introduction
 
-You have considerable flexibility about specifics and you will publish your project openly (as a fork from here) to allow making it part of your portfolio if you choose.  You may work alone or in a team of two students. 
+We aim to develop an interactive game, called "Parallel-Universes Checkers", which is based on the [**Checkers**](https://en.wikipedia.org/wiki/Checkers#:~:text=Checkers%20(American%20English)%2C%20also,Checkers%20is%20developed%20from%20alquerque), also known as **draughts**. We apply some new rules to the original one trying to make it more fun between players. The biggest difference is how we **EXTEND** the original board.
 
-Regardless of topic, it must involve notable amounts of original work of your own, though it can of course use existing libraries or be inspired by or adapted from some other published work(s). 
-
-PLAGIARISM IS NOT ACCEPTABLE. From the first commit through all production of documentation and code, it must be crystal clear which, if any, parts of the project were based on or duplicated from any other source(s) all of which must be cited.  This should be so specific that any evaluator can tell which lines of code are original work and which aren't.  Same for all written narrative, documentation, images, significant algorithms, etc.
-
-## Project Types you may choose:
-
-(Making original _variations_ of puzzles and games isn't as difficult as it may seem -- we'll discuss this in class. _Though admittedly, making *good* game variations -- that are well-balanced, strategically interesting, with good replay value_ can take expertise or luck and play-testing with revisions.  Such balanced elegance is desirable but might not be achievable here, given the short time you have.)
-
-1. Devise your own new _original_ type of logic puzzle or an _original variation_ of existing puzzle type. Like with previous homework, your program should be able to randomly generate many puzzles of your type and to verify that all puzzles generated comply with the standard meta-rule that only one valid solution exists. It needs to output the unsolved puzzles in a way that a human can print or view them conveniently to try solving them and to somehow output (to file?) or display the solution for each puzzle when requested, so as not to spoil the challenge. An interactive UI to "play" the puzzles interactively is *not* required.
-
-2. OR develop an AI game player for an _original variation_ of some existing strategy game.  If you do this, it needs to be set up so it can either play computer-vs-computer and/or against human players with a reasonable text or graphical UI. 2B. If two teams want to independently develop AI players for the same type of game variant as each other (but using different algorithms, strategies, and/or data structures) so they can compete, that is okay.  A sub-variation is to enable this game type on our course game server, discuss with the instructor if this is of interest.
-
-3. OR Computationally 'Solve' a game.  _Background: Some strategic games, especially those of perfect information are known to be "solved". See https://en.wikipedia.org/wiki/Solved_game, which we discussed in class._  Sometimes these proofs are done through mathematical analysis, other times through exhaustive computational verification. If you choose this option, you can either write your own code or modify some existing code that plays a game, to exhaustively analyze a game to attempt to prove if it is "solved" in this way for certain configurations. Changes to rules or conditions of a known solved game can alter this outcome and require reanalysis.
+## Basic Rules
+[**Checkers**](https://en.wikipedia.org/wiki/Checkers#:~:text=Checkers%20(American%20English)%2C%20also,Checkers%20is%20developed%20from%20alquerque)
 
 
-## Deliverables and other Requirements:
+## Variant Rules
 
-* Have some fun!
-* In your own fork, please replace this README.md file's contents with a good introduction to your own project. 
-* Targeted Algorithm Analysis:  Regardless of which option you choose, you need to _describe the performance characteristics of some critical parts of your program and explain why you chose the data structures and core algorithm(s) you did_. So for example, if you chose Type #1, what's the Big-O, Big-Theta, or Big-Omega run-time complexity of your puzzle solver? Or the puzzle generator? If you're doing Type #2 and using minimax or similar, what's the complexity of your heuristic evaluation function?  
-* Performance Measurement: Supplement the analysis above with run-time measurements of multiple iterations of the game or puzzles as discussed in class.
-* If your team has more than one student, see that everyone makes substantial git commits. In addition, your README documentation should include a summary of how you shared the work.
-* Live in-class presentation & demonstration of your work.
+Two parallel-universes version of Checkers are also played on one board for two players. We want to make the most of use of the board since the original
+    version of Checkers only use the dark squares. So a new universe is created in our version for players to play at the dark and
+    light squares at the same time. We make it more fun based on the original rules.
+
+
+1. Players are allowed to do following actions during their turn:
+    a. move ONE piece at the same universe TWICE (i.e. continuous two moves); continuous captures are allowed
+    b. move ONE piece on EACH universe ONCE
+    c. transfer ONE piece at one universe to ANOTHER universe ONCE per turn as their first or second move
+    d. only allowed to transfer to an empty square and must go to an orthogonally-adjacent square on the other universe
+    e. CANNOT CAPTURE at the transferring round
+2. Winning conditions:
+    a. Once a player has NO PIECES on both boards on his turn, he loses.
+    b. Once a player has NO STEPS AND NO TRANFER options on both boards, he loses.
+3. Draw condition:
+    If two players keep chasing to each other without any capture for continuous 50 turns in total,
+    we end the game as a draw.
+
+## Purpose
+1. Implement variant rules to Checkers.
+2. Design an interactive interface for users to compete with each other.
+3. Develop different Machine players using Minimax algorithm.
+   * Random Player - always randomly choose next step without any preference and strategy
+   * Lion-King Player - eager to become a king as soon as possible (Does it remind you the song _"I Just Can't Wait to Be King"_?)
+   * Aggressive Player - tend to capture as many as possible
+
+## UI
+![img.png](img.png)
+
+
+### Contribution
+We build our fundamental rules and create a random player together in the first stage. Then, Yawen mainly worked on UI and Candice developed the two Minimax players. 
+
+
+### Reference
+* GUI https://www.youtube.com/watch?v=vnd3RfeG3NM
+* Minimax pseudocode  https://www.youtube.com/watch?v=l-hh51ncgDI&t=254s
