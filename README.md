@@ -8,6 +8,8 @@ We aim to develop an interactive game, called "Parallel-Universes Checkers", whi
 
 ## Basic Rules
 [**Checkers**](https://en.wikipedia.org/wiki/Checkers#:~:text=Checkers%20(American%20English)%2C%20also,Checkers%20is%20developed%20from%20alquerque)
+![image](https://user-images.githubusercontent.com/89559531/165956747-12025440-2de7-4229-9894-e3dd7e2eb115.png)
+![Source](https://www.microsoft.com/en-id/p/international-checkers-draughts-for-pc-xbox/9nkhlmq07s06#activetab=pivot:overviewtab)
 
 
 ## Variant Rules
@@ -31,7 +33,7 @@ Two parallel-universes version of Checkers are also played on one board for two 
     we end the game as a draw.
 
 ## Goal
-1. Implement variant rules to Checkers.
+1. Implement Checkers with variants.
 2. Design an interactive interface for users to compete with each other.
 3. Develop different Machine players using Minimax algorithm.
    * Random Player - always randomly choose next step without any preference and strategy
