@@ -1,4 +1,5 @@
 import random
+from copy import deepcopy
 
 import pygame
 from numpy.ma import copy
@@ -44,14 +45,14 @@ class MinimaxPlayer:
         self.strategy = strategy  # 'kings' or 'capture'
         self.depth = depth
 
-    def get_next_move(self, gamestate):
+    def get_next_move(self, gamestate,player):
         next_move_options = gamestate.get_all_valid_moves()
         best_move = None
         highest_score = 0
 
         for idx, next_move in enumerate(next_move_options):
-            next_gamestate = simulate_move(gamestate, next_move)
-            node_score = self.minimax_moves(gamestate=next_gamestate, max_player=True, depth=self.depth)
+            next_gamestate = simulate_move(gamestate, next_move,player)
+            node_score = self.minimax_moves(player,gamestate=next_gamestate, max_player=True, depth=self.depth)
             if node_score >= highest_score:
                 highest_score = node_score
                 best_move = next_move
@@ -59,7 +60,7 @@ class MinimaxPlayer:
         return best_move
 
 
-    def minimax_moves(self, gamestate, max_player, depth):
+    def minimax_moves(self, player,gamestate, max_player, depth):
         """
         Minimax pseudocode was referred from:
         https://www.youtube.com/watch?v=l-hh51ncgDI&t=254s
@@ -67,7 +68,8 @@ class MinimaxPlayer:
         print("depth", depth)
         gamestate.reset()
         next_move_options = gamestate.get_all_valid_moves()
-
+        gamestate.player = WHITE if gamestate.player == BLACK else BLACK
+        gamestate.opponent = WHITE if gamestate.opponent == BLACK else BLACK
         if depth == 0 or game_over(gamestate):
             return gamestate.evaluation(strategy=self.strategy)
         if max_player:
@@ -75,9 +77,9 @@ class MinimaxPlayer:
             # loop each child
             for next_move_info in next_move_options:
                 # generate new gamestate
-                next_gamestate = simulate_move(gamestate, next_move_info)
+                next_gamestate = simulate_move(gamestate, next_move_info,player)
                 # evaluation
-                value = self.minimax_moves(gamestate=next_gamestate, max_player=False, depth=depth - 1)
+                value = self.minimax_moves(player,gamestate=next_gamestate, max_player=False, depth=depth - 1)
 
                 max_value = max(max_value, value)
             print("max_value",max_value)
@@ -87,16 +89,17 @@ class MinimaxPlayer:
             min_value = float('inf')
             for next_move_info in next_move_options:
                 print("next_move_info:",next_move_info)
-                next_gamestate = simulate_move(gamestate, next_move_info)
 
-                value = self.minimax_moves(gamestate=next_gamestate, max_player=True, depth=depth - 1)
+                next_gamestate = simulate_move(gamestate, next_move_info,player)
+
+                value = self.minimax_moves(player,gamestate=next_gamestate, max_player=True, depth=depth - 1)
                 min_value = min(min_value, value)
             print("min_value",min_value)
             return min_value
 
 
 def game_over(game):
-    all_moves = game.get_all_valid_moves
+    all_moves = game.get_all_valid_moves()
     has_pieces = 0
     # condition 1: the player has NO STEPS and NO WAY to transfer to both boards
     if not all_moves:
@@ -116,9 +119,25 @@ def game_over(game):
         return True
 
 
-def simulate_move(game, next_move):
+def simulate_move(game, next_move,player):
     simulated_game = deepcopy(game)
     for move in next_move:
+        simulated_game.boards.draw_board(player.win)
+        if move['start_board'] == 1:
+            piece = simulated_game.boards.board1[move['start_move'][0]][move['start_move'][1]]
+            if piece!=0:
+                one_moves, two_moves, transfer_moves = simulated_game.get_valid_moves_piece(piece, simulated_game.boards.board1,1)
+        else:
+            piece = simulated_game.boards.board2[move['start_move'][0]][move['start_move'][1]]
+            if piece != 0:
+                one_moves, two_moves, transfer_moves = simulated_game.get_valid_moves_piece(piece, simulated_game.boards.board2,2)
+        if piece!=0:
+            one_move_list = [[m] for m in one_moves]
+            valid_moves = one_move_list + two_moves + transfer_moves
+            pygame.draw.circle(player.win, (0, 255, 0), (piece.x, piece.y), 30, 5)
+            player.draw_valid_moves(valid_moves)
+            pygame.display.update()
+            pygame.time.delay(100)
         if move['start_board'] != move['end_board']:
             simulated_game.transfer_piece(move, make_move=True)
         else:
@@ -137,7 +156,7 @@ class humanPlayer:
         self.win=win
         self.gs=gs
         self.selected = None
-        self.turn = WHITE
+        # self.turn = BLACK
         self.turn_num=0
         self.valid_moves=[]
         self.selected = None
@@ -193,13 +212,11 @@ class humanPlayer:
         piece = board[row][col]
 
         move=self.get_move(row,col,board_num)
-        print('move',move)
         if self.selected and piece == 0 and move:
             if move['start_board']==move['end_board']:
                 self.gs.update_board_normal(move, board, True)
             else:
                 self.gs.transfer_piece(move, make_move=True)
-                print('board',self.gs.boards.board1)
             self.turn_num+=1
             if self.turn_num%2==0:
                 self.change_turn()
@@ -216,3 +233,21 @@ class humanPlayer:
         else:
             self.gs.player = BLACK
             self.gs.opponent = WHITE
+
+    def ai_move(self, next_move):
+        for move in next_move:
+            if move['start_board'] != move['end_board']:
+                new_board1, new_board2 = self.gs.transfer_piece(move, make_move=True)
+            else:
+                if move['start_board'] == 1:
+                    new_board1 = self.gs.update_board_normal(move, self.gs.boards.board1, make_move=True)
+                    new_board2 = self.gs.board2
+                else:
+                    new_board2 = self.gs.update_board_normal(move, self.gs.boards.board2, make_move=True)
+                    new_board1 = self.gs.board1
+        self.gs.reset()
+        self.change_turn()
+
+
+
+    # pygame.time.delay(100)

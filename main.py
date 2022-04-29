@@ -9,7 +9,7 @@ from checkers.elements import Boards, Piece
 
 #refer
 from checkers.gameState import GameState
-from checkers.player import randomPlayer, humanPlayer
+from checkers.player import randomPlayer, humanPlayer, MinimaxPlayer
 
 
 def get_row_col_from_mouse(pos):
@@ -117,15 +117,20 @@ def main():
     boards=Boards()
     clock = pygame.time.Clock()
     WIN= pygame.display.set_mode((WIDTH*2+2*SQUARE_SIZE, HEIGHT))
-    mode='huamn'
-    gs = GameState(WHITE, boards, 0)
-    if mode == 'huamn':
-        player = humanPlayer(WIN, gs)
+    # mode='huamn'
+    mx=True
+    gs = GameState(BLACK, boards, 0)
+    player = humanPlayer(WIN, gs)
+    mxplayer=MinimaxPlayer(WHITE,'capture',2)
     while run:
         clock.tick(60)
         for event in pygame.event.get():
              if event.type==pygame.QUIT:
                  run=False
+        if mx:
+            if  player.gs.player == WHITE:
+                next_move = mxplayer.get_next_move(player.gs,player)
+                player.ai_move(next_move)
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             pos = pygame.mouse.get_pos()

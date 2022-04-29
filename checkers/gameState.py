@@ -16,6 +16,9 @@ rules:
 """
 
 import copy
+
+import pygame
+
 from checkers.cons import WHITE, BLACK, ROWS
 
 
@@ -220,6 +223,16 @@ class GameState:
                 board=self.boards.board1 if b=='board1' else self.boards.board2
                 board_num=1 if b=='board1' else 2
                 one_moves,two_moves,transfer_moves=self.get_valid_moves_piece(piece,board,board_num)
+                # if player:
+                #     player.gs.boards.draw_board(player.win)
+                #     print('piece:',[piece.row,piece.col])
+                #     pygame.draw.circle(player.win, (0, 255, 0), (piece.x, piece.y), 50, 5)
+                #     one_move_list = [[m] for m in one_moves]
+                #     valid_moves = one_move_list + two_moves + transfer_moves
+                #     player.draw_valid_moves(valid_moves)
+                #     pygame.display.update()
+                #     pygame.time.delay(500)
+
                 if b=='board1':
                     one_move_list1+=one_moves
                 else:
@@ -234,7 +247,6 @@ class GameState:
         for key, value in self.get_valid_moves().items():
             all_moves += value
         return all_moves
-
 
     def check_win(self, next_move):
         has_pieces = 0
@@ -293,3 +305,4 @@ class GameState:
 
     def strategy_capture(self):
         return self.capture_count
+
