@@ -1,5 +1,4 @@
 import random
-from copy import deepcopy
 
 import pygame
 from numpy.ma import copy
@@ -139,6 +138,7 @@ class humanPlayer:
         self.gs=gs
         self.selected = None
         self.turn = WHITE
+        self.turn_num=0
         self.valid_moves=[]
         self.selected = None
 
@@ -160,6 +160,7 @@ class humanPlayer:
         pygame.display.update()
 
     def select(self, row, col,board_num):
+        print('select',[row,col],board_num)
         if self.selected:
             result = self._move(row, col,board_num)
             if not result:
@@ -168,13 +169,12 @@ class humanPlayer:
 
         board=self.gs.boards.board1 if board_num==1 else self.gs.boards.board2
         piece = board[row][col]
-        if piece != 0 and piece.color == self.turn:
+        if piece != 0 and piece and piece.color == self.gs.player:
             self.selected = piece
             one_moves,two_moves,transfer_moves = self.gs.get_valid_moves_piece(piece,board,board_num)
             one_move_list=[[m] for m in one_moves]
             self.valid_moves=one_move_list+two_moves+transfer_moves
-            for i in self.valid_moves:
-                print(i)
+
             return True
         return False
 
@@ -182,20 +182,27 @@ class humanPlayer:
         for move in self.valid_moves:
             for i in range(len(move)):
                 if board_num==move[i]['end_board']:
-                    if [row,col]==move[i]['end_move'] or [row,col] in move[i]['capture']:
+                    if [row,col]==move[i]['end_move']:
                         return move[i]
+                else:
+                    continue
         return False
 
     def _move(self, row, col,board_num):
         board = self.gs.boards.board1 if board_num == 1 else self.gs.boards.board2
         piece = board[row][col]
+
         move=self.get_move(row,col,board_num)
+        print('move',move)
         if self.selected and piece == 0 and move:
             if move['start_board']==move['end_board']:
                 self.gs.update_board_normal(move, board, True)
             else:
                 self.gs.transfer_piece(move, make_move=True)
-            self.change_turn()
+                print('board',self.gs.boards.board1)
+            self.turn_num+=1
+            if self.turn_num%2==0:
+                self.change_turn()
         else:
             return False
         return True
@@ -203,7 +210,9 @@ class humanPlayer:
 
     def change_turn(self):
         self.valid_moves = {}
-        if self.turn == BLACK:
-            self.turn = WHITE
+        if self.gs.player == BLACK:
+            self.gs.player = WHITE
+            self.gs.opponent=BLACK
         else:
-            self.turn = BLACK
+            self.gs.player = BLACK
+            self.gs.opponent = WHITE

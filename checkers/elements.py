@@ -30,20 +30,18 @@ class Boards:
             for col in range(1,ROWS+1):
                 if col%2==(row%2):
                     if row<ROWS//2:
-                        self.board1[row].append(Piece(row,col,WHITE,1))
+                        self.board1[row].append(Piece(row,col,WHITE,1,GOLD))
                     elif row>ROWS//2+1:
-                        self.board1[row].append(Piece(row,col,BLACK,1))
+                        self.board1[row].append(Piece(row,col,BLACK,1,GOLD))
                     else:
                         self.board1[row].append(0)
                 else:
                     self.board1[row].append(0)
                 if col % 2 == ((row+1) % 2):
-                    # if row<4:
                     if row<ROWS//2:
-                        self.board2[row].append(Piece(row,col,WHITE,2))
-                    # elif row>5:
+                        self.board2[row].append(Piece(row,col,WHITE,2,SILVER))
                     elif row>ROWS//2+1:
-                        self.board2[row].append(Piece(row,col,BLACK,2))
+                        self.board2[row].append(Piece(row,col,BLACK,2,SILVER))
                     else:
                         self.board2[row].append(0)
                 else:
@@ -68,13 +66,14 @@ class Piece:
     PADDING = 11
     OUTLINE = 3
 
-    def __init__(self, row, col, color,board_num):
+    def __init__(self, row, col, color,board_num,coat):
         self.board_num=board_num
         self.row = row
         self.col = col
         self.color = color
         self.sign='w' if self.color==WHITE else 'b'
         self.king = False
+        self.coat=coat
         self.x = 0
         self.y = 0
         self.calc_pos()
@@ -95,10 +94,7 @@ class Piece:
 
     def draw(self, win):
         radius = SQUARE_SIZE // 2 - self.PADDING
-        if self.board_num==1:
-            pygame.draw.circle(win, GOLD, (self.x, self.y), radius + self.OUTLINE)
-        else:
-            pygame.draw.circle(win, SILVER, (self.x, self.y), radius + self.OUTLINE)
+        pygame.draw.circle(win, self.coat, (self.x, self.y), radius + self.OUTLINE)
         pygame.draw.circle(win, self.color, (self.x, self.y), radius)
         if self.king:
             win.blit(CROWN, (self.x - CROWN.get_width() // 2, self.y - CROWN.get_height() // 2))
