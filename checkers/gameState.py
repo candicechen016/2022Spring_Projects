@@ -16,29 +16,23 @@ rules:
 """
 
 import copy
-
-import pygame.draw
-
-from checkers.cons import WHITE, BLACK, ROWS, GREEN, SQUARE_SIZE
+from checkers.cons import WHITE, BLACK, ROWS
 
 
 class GameState:
-
     def __init__(self, player, boards, no_capture=0):
 
-        # self.win=win
         self.boards = boards
-        # self.board1 = boards.board1
-        # self.board2 = boards.board2
         self.player = player
         self.opponent = BLACK if self.player == WHITE else WHITE
-        # self.w_left = self.b_left=12
+        self.capture_count = 0
         self.no_capture = no_capture
         self.reset()
-        self.opponent_positions = {'board1': self.get_positions(self.opponent, self.boards.board1),
-                                   'board2': self.get_positions(self.opponent, self.boards.board2)}
+
 
     def reset(self):
+        self.opponent_positions = {'board1': self.get_positions(self.opponent, self.boards.board1),
+                                   'board2': self.get_positions(self.opponent, self.boards.board2)}
         self.positions = {'board1': self.get_positions(self.player, self.boards.board1),
                           'board2': self.get_positions(self.player, self.boards.board2)}
 
@@ -93,14 +87,10 @@ class GameState:
         # two_move_boards = []
         row, col = piece.row, piece.col
         end_moves = self.one_move(piece.direction, [row, col], board, board_num)
-        print("end_moves:",end_moves)
-        print("len(end_moves):", len(end_moves))
         for m in end_moves:
-            print(m['end_move'])
             m['start_move'] = [row, col]
             m['start_board'] = board_num
             one_move_board = self.update_board_normal(m, board)
-            print("one_move_board",one_move_board)
             one_move_list.append(m)
             # one_move_boards.append(one_move_board)
             second_moves = self.one_move(one_move_board[m['end_move'][0]][m['end_move'][1]].direction,
@@ -115,8 +105,6 @@ class GameState:
         return one_move_list, two_move_list
 
     def update_king(self, piece, position):
-        print("piece:",piece)
-        print("position:",position)
         if position[0] == ROWS and piece.color == WHITE:
             piece.make_king()
             self.boards.w_king_left += 1
@@ -135,14 +123,16 @@ class GameState:
         board_temp[move['end_move'][0]][move['end_move'][1]] = start_piece
         if make_move:
             start_piece.move(move['end_move'][0], move['end_move'][1])
+            self.capture_count += len(move['capture'])
         board_temp[move['start_move'][0]][move['start_move'][1]] = 0
 
         self.update_king(start_piece, move['end_move'])
 
         if move['capture']:
+
             for cap in move['capture']:
                 if board_temp[cap[0]][cap[1]].color == WHITE:
-                    self.boards.w_left_ = 1
+                    self.boards.w_left_ = -1
                     if cap[1] == ROWS - 1:
                         start_piece.make_king()
                         self.boards.w_king_left += 1
@@ -229,7 +219,6 @@ class GameState:
                 two_move_list+=two_moves
                 transfer_move_list+=transfer_moves
         one_move_comb = self.first_move_comb(one_move_list1, one_move_list2)
-        print("one_move_comb",one_move_comb)
         return {'one_move': one_move_comb,'two_move': two_move_list, 'transfer_move': transfer_move_list}
 
     def get_all_valid_moves(self):
@@ -274,115 +263,25 @@ class GameState:
         return one_move_list
 
     # refer
-#
-# def main():
-#     WIN = pygame.display.set_mode((WIDTH * 2 + 2 * SQUARE_SIZE, HEIGHT))
-#     # player1 = randomPlayer(WHITE)
-#     # player2 = randomPlayer(BLACK)
-#     # for i in range(5):
-#     #     print(i)
-#     #     one_round(WIN,player1, player2)
-#     # print(player1.win_count)
-#     # print(player2.win_count)
-#     boards=Boards()
-#     gs=GameState(WIN,WHITE,boards)
-#     gs.board1 = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-#                  [1, 0, 0, 0, 0, Piece(1, 5, WHITE, 1), 0, 0, 0, 1],
-#                  [1, 0, 0, 0, Piece(2, 4, BLACK, 1), 0, Piece(2, 6, BLACK, 1), 0, 0, 1],
-#                  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-#                  [1, 0, Piece(4, 2, BLACK, 1), 0, 0, 0, 0, 0, 0, 1],
-#                  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-#                  [1, 0, 0, 0, 0, Piece(6, 5, WHITE, 1), 0, 0, 0, 1],
-#                  [1, 0, Piece(7, 2, BLACK, 1), 0, Piece(7, 4, BLACK, 1), 0, 0, 0, 0, 1],
-#                  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-#                  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
-#     for m in gs.board1:
-#         print(m)
-#     next_moves = gs.one_move([1], [6, 5], gs.board1, 1)
-#     for i in next_moves:
-#         print(i)
 
-# moves = gs.get_valid_moves()
-# for m in moves['transfer_move']:
-#     print(m)
+    def evaluation(self, strategy='kings'):
+        if strategy == 'kings':
+            score = self.strategy_more_kings(self.player)
+            print("strategy_more_kings",score)
 
-# for m in moves['two_move']:
-#     print(m)
-
-    def evaluation(self):
-        score = self.strategy_more_kings()
-        print(score)
+        if strategy == 'capture':
+            score = self.strategy_capture()
         return score
 
-    def strategy_more_kings(self):
-
-        my_piece_total, opponent_piece_total = 0, 0
-        my_king, opponent_king = 0, 0
-        for board in ['board1', 'board2']:
-            my_piece_total += len(self.positions[board])
-            my_king += len(self.count_kings(self.positions[board]))
-            opponent_piece_total += len(self.opponent_positions[board])
-            opponent_king += len(self.count_kings(self.opponent_positions[board]))
-        print("my_piece_total - opponent_piece_total + my_king*1.5 - opponent_king:",my_piece_total , opponent_piece_total , my_king,opponent_king)
-        score = my_piece_total - opponent_piece_total + my_king*1.5 - opponent_king*1.5
+    def strategy_more_kings(self, player):
+        if player == WHITE:
+            my_piece_total, opponent_piece_total = self.boards.w_left, self.boards.b_left
+            my_king, opponent_king = self.boards.w_king_left, self.boards.b_king_left
+        if player == BLACK:
+            my_piece_total, opponent_piece_total = self.boards.b_left, self.boards.w_left
+            my_king, opponent_king = self.boards.b_king_left, self.boards.w_king_left
+        score = my_piece_total - opponent_piece_total + my_king * 1.5 - opponent_king * 1.5
         return score
 
-    def count_kings(self, positions):
-        kings_total = []
-        for piece in positions:
-            print("piece.king",piece.king)
-            if piece.king:
-                kings_total.append(piece)
-            print("kings_total",kings_total)
-        return kings_total
-
-
-#     clock = pygame.time.Clock()
-# #
-#     while run:
-#         clock.tick(FPS)
-#         for event in pygame.event.get():
-#              if event.type==pygame.QUIT:
-#                  run=False
-#         boards.draw_board(WIN)
-#         pygame.display.update()
-#     pygame.quit()
-# main()
-#
-# if __name__ == '__main__':
-# board1 = np.array([[1, 1, 1, 1, 1, 1, 1, 1],
-#                    [1, 'w1', '.', 'w1', '.', 'w1', '.', 1],
-#                    [1, '.', 'w1', '.', 'w1', '.', 'w1', 1],
-#                    [1, '.', '.', '.', '.', '.', '.', 1],
-#                    [1, '.', '.', '.', '.', '.', '.', 1],
-#                    [1, 'b1', '.', 'b1', '.', 'b1', '.', 1],
-#                    [1, '.', 'b1', '.', 'b1', '.', 'b1', 1],
-#                    [1, 1, 1, 1, 1, 1, 1, 1]])
-#
-# board2 = np.array([
-#     [1, 1, 1, 1, 1, 1, 1, 1],
-#     [1, '.', 'w2', '.', 'w2', '.', 'w2', 1],
-#     [1, 'w2', '.', 'w2', '.', 'w2', '.', 1],
-#     [1, '.', '.', '.', '.', '.', '.', 1],
-#     [1, '.', '.', '.', '.', '.', '.', 1],
-#     [1, '.', 'b2', '.', 'b2', '.', 'b2', 1],
-#     [1, 'b2', '.', 'b2', '.', 'b2', '.', 1],
-#     [1, 1, 1, 1, 1, 1, 1, 1]])
-
-
-#
-#
-
-#     board1 = np.array([[1, 1, 1, 1, 1, 1],
-#                        [1, 'w1', '.', 'w1', '.', 1],
-#                        [1, '.', '.', '.', '.', 1],
-#                        [1, '.', '.', '.', '.', 1],
-#                        [1, '.', 'b1', '.', 'b1', 1],
-#                        [1, 1, 1, 1, 1, 1]])
-#
-#     board2 = np.array([[1, 1, 1, 1, 1, 1],
-#                        [1, '.', 'w2', '.', 'w2', 1],
-#                        [1, '.', '.', '.', '.', 1],
-#                        [1, '.', '.', '.', '.', 1],
-#                        [1, 'b2', '.', 'b2', '.', 1],
-#                        [1, 1, 1, 1, 1, 1]])
+    def strategy_capture(self):
+        return self.capture_count
