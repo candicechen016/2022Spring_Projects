@@ -18,14 +18,14 @@ Two parallel-universes version of Checkers are also played on one board for two 
 
 
 1. Players are allowed to do following actions during their turn:
-    a. move ONE piece at the same universe TWICE (i.e. continuous two moves); continuous captures are allowed
-    b. move ONE piece on EACH universe ONCE
-    c. transfer ONE piece at one universe to ANOTHER universe ONCE per turn as their first or second move
-    d. only allowed to transfer to an empty square and must go to an orthogonally-adjacent square on the other universe
-    e. CANNOT CAPTURE at the transferring round
+    * ove ONE piece at the same universe TWICE (i.e. continuous two moves); continuous captures are allowed
+    * move ONE piece on EACH universe ONCE
+    * transfer ONE piece at one universe to ANOTHER universe ONCE per turn as their first or second move
+    * only allowed to transfer to an empty square and must go to an orthogonally-adjacent square on the other universe
+    * CANNOT CAPTURE at the transferring round
 2. Winning conditions:
-    a. Once a player has NO PIECES on both boards on his turn, he loses.
-    b. Once a player has NO STEPS AND NO TRANFER options on both boards, he loses.
+    * Once a player has NO PIECES on both boards on his turn, he loses.
+    * Once a player has NO STEPS AND NO TRANFER options on both boards, he loses.
 3. Draw condition:
     If two players keep chasing to each other without any capture for continuous 50 turns in total,
     we end the game as a draw.
@@ -39,7 +39,7 @@ Two parallel-universes version of Checkers are also played on one board for two 
    * Aggressive Player - tend to capture as many as possible
 
 ## UI
-![img.png](img.png)
+![image](https://user-images.githubusercontent.com/89559531/165950259-f9ab7605-9a49-46da-83dd-1650809b0cb6.png)
 
 
 ### Contribution
