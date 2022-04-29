@@ -121,24 +121,42 @@ def main():
     mx=True
     gs = GameState(BLACK, boards, 0)
     player = humanPlayer(WIN, gs)
-    mxplayer=MinimaxPlayer(WHITE,'capture',2)
-    while run:
+    mxplayer1=MinimaxPlayer(WHITE,'king',1)
+    mxplayer2 = MinimaxPlayer(BLACK, 'capture', 1)
+    while True:
         clock.tick(60)
         for event in pygame.event.get():
              if event.type==pygame.QUIT:
                  run=False
         if mx:
             if  player.gs.player == WHITE:
-                next_move = mxplayer.get_next_move(player.gs,player)
+                next_move = mxplayer1.get_next_move(player.gs,player)
                 player.ai_move(next_move)
 
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            pos = pygame.mouse.get_pos()
-            row, col,board_num = get_row_col_from_mouse(pos)
-            player.select(row, col,board_num)
-            boards.draw_board(WIN)
+            if  player.gs.player == BLACK:
+                next_move = mxplayer2.get_next_move(player.gs,player)
+                player.ai_move(next_move)
+
+
+        # if event.type == pygame.MOUSEBUTTONDOWN:
+        #     pos = pygame.mouse.get_pos()
+        #     row, col,board_num = get_row_col_from_mouse(pos)
+        #     player.select(row, col,board_num)
+        #     boards.draw_board(WIN)
 
         player.update_win()
     pygame.quit()
 main()
+
+
+# gs = GameState(WHITE, boards)
+# # one_round(player1, player0)
+# stats = {}
 #
+# for i in range(3):
+#     one_round(player1, player0)
+#     stats[i] = {"tag1": player1.player_tag, "win1": player1.win_count, "tag2": player2.player_tag,
+#                 "win2": player2.win_count}
+# print(player1.win_count)
+# print(player2.win_count)
+# print(stats)

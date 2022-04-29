@@ -136,10 +136,13 @@ def simulate_move(game, next_move,player):
         if piece!=0:
             one_move_list = [[m] for m in one_moves]
             valid_moves = one_move_list + two_moves + transfer_moves
-            pygame.draw.circle(player.win, (0, 255, 0), (piece.x, piece.y), 30, 5)
+            if simulated_game.player==WHITE:
+                pygame.draw.circle(player.win, (0, 255, 0), (piece.x, piece.y), 30, 5)
+            else:
+                pygame.draw.circle(player.win, (255, 255, 0), (piece.x, piece.y), 30, 5)
             player.draw_valid_moves(valid_moves)
             pygame.display.update()
-            pygame.time.delay(100)
+            pygame.time.delay(500)
         if move['start_board'] != move['end_board']:
             simulated_game.transfer_piece(move, make_move=True)
         else:
