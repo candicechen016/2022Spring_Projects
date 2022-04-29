@@ -90,10 +90,14 @@ class GameState:
         # two_move_boards = []
         row, col = piece.row, piece.col
         end_moves = self.one_move(piece.direction, [row, col], board, board_num)
+        print("end_moves:",end_moves)
+        print("len(end_moves):", len(end_moves))
         for m in end_moves:
+            print(m['end_move'])
             m['start_move'] = [row, col]
             m['start_board'] = board_num
             one_move_board = self.update_board_normal(m, board)
+            print("one_move_board",one_move_board)
             one_move_list.append(m)
             # one_move_boards.append(one_move_board)
             second_moves = self.one_move(one_move_board[m['end_move'][0]][m['end_move'][1]].direction,
@@ -109,6 +113,8 @@ class GameState:
         return one_move_list, two_move_list
 
     def update_king(self, piece, position):
+        print("piece:",piece)
+        print("position:",position)
         if position[0] == ROWS and piece.color == WHITE:
             piece.make_king()
             self.boards.w_king_left += 1
@@ -121,6 +127,8 @@ class GameState:
             board_temp = board
         else:
             board_temp = copy.deepcopy(board)
+        print("board_temp:",board_temp)
+        print("move",move)
         start_piece = board_temp[move['start_move'][0]][move['start_move'][1]]
         board_temp[move['end_move'][0]][move['end_move'][1]] = start_piece
         if make_move:
@@ -219,7 +227,15 @@ class GameState:
                 two_move_list+=two_moves
                 transfer_move_list+=transfer_moves
         one_move_comb = self.first_move_comb(one_move_list1, one_move_list2)
+        print("one_move_comb",one_move_comb)
         return {'one_move': one_move_comb,'two_move': two_move_list, 'transfer_move': transfer_move_list}
+
+    def get_all_valid_moves(self):
+        all_moves = []
+        for key, value in self.get_valid_moves().items():
+            all_moves += value
+        return all_moves
+
 
     def check_win(self, next_move):
         has_pieces = 0
@@ -231,7 +247,7 @@ class GameState:
 
         for board_name in ['board1', 'board2']:
             # condition 2: the player has NO PIECES on Both boards
-            if len(self.positions) == 0:
+            if len(self.positions[board_name]) == 0:
                 has_pieces += 1
                 continue
         if has_pieces == 2:
@@ -256,7 +272,6 @@ class GameState:
         return one_move_list
 
     # refer
-
 #
 # def main():
 #     WIN = pygame.display.set_mode((WIDTH * 2 + 2 * SQUARE_SIZE, HEIGHT))
@@ -291,6 +306,33 @@ class GameState:
 
 # for m in moves['two_move']:
 #     print(m)
+
+    def evaluation(self):
+        score = self.strategy_more_kings()
+        print(score)
+        return score
+
+    def strategy_more_kings(self):
+
+        my_piece_total, opponent_piece_total = 0, 0
+        my_king, opponent_king = 0, 0
+        for board in ['board1', 'board2']:
+            my_piece_total += len(self.positions[board])
+            my_king += len(self.count_kings(self.positions[board]))
+            opponent_piece_total += len(self.opponent_positions[board])
+            opponent_king += len(self.count_kings(self.opponent_positions[board]))
+        print("my_piece_total - opponent_piece_total + my_king*1.5 - opponent_king:",my_piece_total , opponent_piece_total , my_king,opponent_king)
+        score = my_piece_total - opponent_piece_total + my_king*1.5 - opponent_king*1.5
+        return score
+
+    def count_kings(self, positions):
+        kings_total = []
+        for piece in positions:
+            print("piece.king",piece.king)
+            if piece.king:
+                kings_total.append(piece)
+            print("kings_total",kings_total)
+        return kings_total
 
 
 #     clock = pygame.time.Clock()
