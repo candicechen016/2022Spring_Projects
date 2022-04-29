@@ -1,16 +1,11 @@
-import copy
 import random
 
 import pygame
+from numpy.ma import copy
 
 from checkers.cons import GREEN, SQUARE_SIZE, ROWS, WHITE, BLACK
 from checkers.elements import Boards
 from checkers.gameState import GameState
-
-
-# from checkers.cons import WHITE, BLACK
-# from checkers.gameState import GameState
-# from main import one_turn
 
 
 class randomPlayer:
@@ -38,10 +33,11 @@ class randomPlayer:
 
 class MinimaxPlayer:
 
-    def __init__(self, color, strategy=0):
-
-        self.color = color
+    def __init__(self, piece, ai=False, strategy=0):
+        self.piece = piece
         self.win_count = 0
+        self.lose_count = 0
+        self.draw_count = 0
 
     def get_next_move(self, gamestate):
         pass
@@ -58,6 +54,7 @@ class MinimaxPlayer:
         print("depth", depth)
         print("gamestate.board1:",gamestate.board1)
         print("gamestate.board2:", gamestate.board2)
+        gamestate.get_positions(gamestate.player)
         next_move_options = gamestate.get_all_valid_moves()
         print("next_move_options", next_move_options)
         best_move = None
@@ -146,72 +143,74 @@ def simulate_move(game, next_move):
             if move['start_board'] == 1:
                 new_board1 = simulated_game.update_board_normal(move, simulated_game.board1, make_move=True)
                 new_board2 = simulated_game.board2
+
             else:
                 new_board2 = simulated_game.update_board_normal(move, simulated_game.board2, make_move=True)
                 new_board1 = simulated_game.board1
     return simulated_game
 
 
-# refer
-class Board:
-    pass
-
+#refer
 
 class humanPlayer:
-    def __init__(self, win, gs):
-        self.win = win
-        self.gs = gs
-
-    def reset(self):
+    def __init__(self,win,gs):
+        self.win=win
+        self.gs=gs
         self.selected = None
         self.turn = WHITE
-        self.valid_moves = {}
+        self.valid_moves=[]
+        self.selected = None
 
-    def draw_valid_moves(self, moves):
+
+    def draw_valid_moves(self,moves):
         for move in moves:
-            for i in range(2):
-                if move['end_board'] == 'board1':
-                    row, col = move[i]['end_move'][i], move[i]['end_move'][1]
-                else:
-                    row, col = move[i]['end_move'][i], move[i]['end_move'][1] + ROWS + 1
-            pygame.draw.circle(self.win, GREEN,
-                               (col * SQUARE_SIZE + SQUARE_SIZE // 2, row * SQUARE_SIZE + SQUARE_SIZE // 2), 15)
+            for i in range(len(move)):
+                if move[i]['end_board']==1:
+                    row,col=move[i]['end_move'][0]-1,move[i]['end_move'][1]-1
+                    pygame.draw.circle(self.win, GREEN,(col * SQUARE_SIZE + SQUARE_SIZE // 2, row * SQUARE_SIZE + SQUARE_SIZE // 2), 10)
+                if move[i]['end_board'] == 2:
+                    row, col = move[i]['end_move'][0]-1, move[i]['end_move'][1]+ROWS+1
+                    pygame.draw.circle(self.win, GREEN, (col * SQUARE_SIZE + SQUARE_SIZE//2, row * SQUARE_SIZE + SQUARE_SIZE//2), 10)
 
-    # refer
+    #refer
     def update_win(self):
-        self.boards.draw_board(self.win)
+        self.gs.boards.draw_board(self.win)
         self.draw_valid_moves(self.valid_moves)
         pygame.display.update()
 
-    def select(self, row, col, board_num):
+    def select(self, row, col,board_num):
         if self.selected:
-            result = self._move(row, col, board_num)
+            result = self._move(row, col,board_num)
             if not result:
                 self.selected = None
-                self.select(row, col, board_num)
+                self.select(row, col,board_num)
 
-        board = self.gs.board1 if board_num == 1 else self.gs.board2
+        board=self.gs.boards.board1 if board_num==1 else self.gs.boards.board2
         piece = board[row][col]
         if piece != 0 and piece.color == self.turn:
             self.selected = piece
-            self.valid_moves = self.gs.get_valid_moves_piece(piece)
+            one_moves,two_moves,transfer_moves = self.gs.get_valid_moves_piece(piece,board,board_num)
+            one_move_list=[[m] for m in one_moves]
+            self.valid_moves=one_move_list+two_moves+transfer_moves
+            for i in self.valid_moves:
+                print(i)
             return True
         return False
 
-    def get_move(self, row, col, board_num):
+    def get_move(self,row,col,board_num):
         for move in self.valid_moves:
             for i in range(len(move)):
-                if board_num == move[i]['end_board']:
-                    if [row, col] == move[i]['end_move'] or [row, col] in move[i]['capture']:
+                if board_num==move[i]['end_board']:
+                    if [row,col]==move[i]['end_move'] or [row,col] in move[i]['capture']:
                         return move[i]
         return False
 
-    def _move(self, row, col, board_num):
-        board = self.gs.board1 if board_num == 1 else self.gs.board2
+    def _move(self, row, col,board_num):
+        board = self.gs.boards.board1 if board_num == 1 else self.gs.boards.board2
         piece = board[row][col]
-        move = self.get_move(row, col, board_num)
+        move=self.get_move(row,col,board_num)
         if self.selected and piece == 0 and move:
-            if move['start_board'] == move['end_board']:
+            if move['start_board']==move['end_board']:
                 self.gs.update_board_normal(move, board, True)
             else:
                 self.gs.transfer_piece(move, make_move=True)
@@ -219,6 +218,7 @@ class humanPlayer:
         else:
             return False
         return True
+
 
     def change_turn(self):
         self.valid_moves = {}

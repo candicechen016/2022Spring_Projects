@@ -5,7 +5,7 @@ UI reference: https://github.com/techwithtim/Python-Checkers-AI/blob/master/chec
 import pygame
 
 from checkers.cons import SQUARE_SIZE, WIDTH, HEIGHT, WHITE, BLACK, ROWS
-from checkers.elements import Boards
+from checkers.elements import Boards, Piece
 
 #refer
 from checkers.gameState import GameState
@@ -14,11 +14,12 @@ from checkers.player import randomPlayer, humanPlayer
 
 def get_row_col_from_mouse(pos):
     x, y = pos
+    print(x,y)
     row = y // SQUARE_SIZE+1
-    col = x // SQUARE_SIZE
+    col = x // SQUARE_SIZE+1
     board_num=1
     if col>ROWS+1:
-        col=col-ROWS-1
+        col=col-ROWS-2
         board_num=2
     return row, col,board_num
 
@@ -72,18 +73,45 @@ def one_round(player1, player2):
         else:
             break
 
-# def test():
-#     WIN = pygame.display.set_mode((WIDTH * 2 + 2 * SQUARE_SIZE, HEIGHT))
-#     player1 = randomPlayer(WHITE)
-#     player2 = randomPlayer(BLACK)
-#     for i in range(5):
-#         print(i)
-#         one_round(player1, player2)
-#     print(player1.win_count)
-#     print(player2.win_count)
-#
-# test()
+def test():
+    WIN = pygame.display.set_mode((WIDTH * 2 + 2 * SQUARE_SIZE, HEIGHT))
+    player1 = randomPlayer(WHITE)
+    player2 = randomPlayer(BLACK)
+    for i in range(5):
+        print(i)
+        one_round(player1, player2)
+    print(player1.win_count)
+    print(player2.win_count)
 
+# test()
+# def main():
+    # WIN = pygame.display.set_mode((WIDTH * 2 + 2 * SQUARE_SIZE, HEIGHT))
+    # player1 = randomPlayer(WHITE)
+    # player2 = randomPlayer(BLACK)
+    # for i in range(5):
+    #     print(i)
+    #     one_round(WIN,player1, player2)
+    # print(player1.win_count)
+    # print(player2.win_count)
+#     boards=Boards()
+#     gs=GameState(WHITE,boards)
+#     gs.boards.board1 = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+#                  [1, 0, 0, 0, 0, Piece(1, 5, WHITE, 1), 0, 0, 0, 1],
+#                  [1, 0, 0, 0, Piece(2, 4, BLACK, 1), 0, Piece(2, 6, BLACK, 1), 0, 0, 1],
+#                  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+#                  [1, 0, Piece(4, 2, BLACK, 1), 0, 0, 0, 0, 0, 0, 1],
+#                  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+#                  [1, 0, 0, 0, 0, Piece(6, 5, WHITE, 1), 0, 0, 0, 1],
+#                  [1, 0, Piece(7, 2, BLACK, 1), 0, Piece(7, 4, BLACK, 1), 0, 0, 0, 0, 1],
+#                  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+#                  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
+#
+#     for m in gs.boards.board1:
+#         print(m)
+#     next_moves = gs.get_valid_moves()
+#     for i in next_moves:
+#         print(i)
+# main()
 def main():
     run=True
     boards=Boards()
@@ -91,6 +119,8 @@ def main():
     WIN= pygame.display.set_mode((WIDTH*2+2*SQUARE_SIZE, HEIGHT))
     mode='huamn'
     gs = GameState(WHITE, boards, 0)
+    if mode == 'huamn':
+        player = humanPlayer(WIN, gs)
     while run:
         clock.tick(60)
         for event in pygame.event.get():
@@ -100,12 +130,10 @@ def main():
         if event.type == pygame.MOUSEBUTTONDOWN:
             pos = pygame.mouse.get_pos()
             row, col,board_num = get_row_col_from_mouse(pos)
-            if mode=='huamn':
-                player=humanPlayer(WIN,gs)
-                player.select(row, col,board_num)
-                boards.draw_board(WIN)
+            player.select(row, col,board_num)
+            boards.draw_board(WIN)
 
-        pygame.display.update()
-
+        player.update_win()
     pygame.quit()
 main()
+#

@@ -28,16 +28,19 @@ class GameState:
 
         # self.win=win
         self.boards = boards
-        self.board1 = boards.board1
-        self.board2 = boards.board2
+        # self.board1 = boards.board1
+        # self.board2 = boards.board2
         self.player = player
         self.opponent = BLACK if self.player == WHITE else WHITE
         # self.w_left = self.b_left=12
         self.no_capture = no_capture
-        self.positions = {'board1': self.get_positions(self.player, self.board1),
-                          'board2': self.get_positions(self.player, self.board2)}
-        self.opponent_positions = {'board1': self.get_positions(self.opponent, self.board1),
-                                   'board2': self.get_positions(self.opponent, self.board2)}
+        self.reset()
+        self.opponent_positions = {'board1': self.get_positions(self.opponent, self.boards.board1),
+                                   'board2': self.get_positions(self.opponent, self.boards.board2)}
+
+    def reset(self):
+        self.positions = {'board1': self.get_positions(self.player, self.boards.board1),
+                          'board2': self.get_positions(self.player, self.boards.board2)}
 
     def get_positions(self, color, board):
         positions1 = []
@@ -101,8 +104,7 @@ class GameState:
             one_move_list.append(m)
             # one_move_boards.append(one_move_board)
             second_moves = self.one_move(one_move_board[m['end_move'][0]][m['end_move'][1]].direction,
-                                         m['end_move'],
-                                         one_move_board, board_num)
+                                         m['end_move'],one_move_board, board_num)
             if second_moves:
                 for n in second_moves:
                     n['start_move'] = m['end_move']
@@ -162,8 +164,8 @@ class GameState:
         return empty
 
     def transfer_piece(self, move_dict, make_move=False):
-        board1 = self.board1 if move_dict['start_board'] == 1 else self.board2
-        board2 = self.board1 if move_dict['end_board'] == 1 else self.board2
+        board1 = self.boards.board1 if move_dict['start_board'] == 1 else self.boards.board2
+        board2 = self.boards.board1 if move_dict['end_board'] == 1 else self.boards.board2
 
         if make_move:
             start_board = board1
@@ -183,7 +185,7 @@ class GameState:
 
     def get_transferred_list(self, piece, board_num):
         end_board_num = 2 if board_num == 1 else 1
-        other_board = self.board2 if board_num == 1 else self.board1
+        other_board = self.boards.board2 if board_num == 1 else self.boards.board1
         transfer_move_list = []
         # transfer_board_list = []
 
@@ -217,7 +219,7 @@ class GameState:
         transfer_move_list=[]
         for b in ['board1','board2']:
             for piece in self.positions[b]:
-                board=self.board1 if b=='board1' else self.board2
+                board=self.boards.board1 if b=='board1' else self.boards.board2
                 board_num=1 if b=='board1' else 2
                 one_moves,two_moves,transfer_moves=self.get_valid_moves_piece(piece,board,board_num)
                 if b=='board1':
