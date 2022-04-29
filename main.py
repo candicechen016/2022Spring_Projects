@@ -1,5 +1,41 @@
 """
-UI reference: https://github.com/techwithtim/Python-Checkers-AI/blob/master/checkers/board.py
+IS597DS - Final Project
+Authors: Yawen Deng, Candice Chen
+
+==Parallel-Universes Checkers==
+
+Purpose:
+1. Checkers with rules
+2. An interactive interface to play with friends
+3. Three different Machine players
+    a. Random Player - randomly choose next step without any preference and strategy
+    b. Lion-King Player - eager to become a king as soon as possible (I Just Can't Wait to Be King)
+    c. Capture Player - tend to capture as many as possible
+
+
+Variant Rules:
+1. Two parallel-universes on one board for two players. We want to make the most of use of the board since the original
+    version of Checkers only play at the dark squares. So a new universe is created for players to play at the dark and
+    light squares at the same time. We make it more fun based on the original rules.
+2. Players are allowed to do following actions during their turn:
+    a. move ONE piece at the same universe TWICE (i.e. continuous two moves); continuous captures are allowed
+    b. move ONE piece on EACH universe ONCE
+    c. transfer ONE piece at one universe to ANOTHER universe ONCE per turn as their first or second move
+    d. only allowed to transfer to an empty square and must go to an orthogonally-adjacent square on the other universe
+    e. CANNOT CAPTURE at the transferring round
+3. Winning conditions:
+    a. Once a player has NO PIECES on both boards on his turn, he loses.
+    b. Once a player has NO STEPS AND NO TRANFER options on both boards, he loses.
+4. Draw condition:
+    If two players keep chasing to each other without any capture for continuous 50 turns in total,
+    we end the game as a draw.
+
+
+UI Reference:
+Our UI mainly referred to this source:
+https://github.com/techwithtim/Python-Checkers-AI/blob/master/checkers/board.py
+We tried to make the UI fit our game so the some elements in our structure
+
 """
 
 import pygame
@@ -50,6 +86,28 @@ def one_turn(player, game):
     print('game', game.no_capture)
     return new_board1, new_board2
 
+def print_stat(stats):
+    """
+    Print tha final learning statistic.
+    """
+    num_rounds = len(stats)
+    gap = 10
+    if num_rounds > 500:
+        gap = 50
+    print()
+    print('{:^20s} {:^10s} {:^10s} {:^20s} {:^10s} {:^10s} {:^10s}'.format(' # Player1 ', ' # Won ', '%', ' # Player2 ',
+                                                                    ' # Won ', '%', '# Draw'))
+    print('{:^20s} {:^10s} {:^10s} {:^20s} {:^10s} {:^10s} {:^10s}'.format('--------------------', '----------',
+                                                                    '----------', '--------------------', '----------',
+                                                                    '----------', '----------'))
+    for key, value in stats.items():
+        if num_rounds // gap == key:
+            draw = num_rounds - value["win1"] - value["win2"]
+            win_percent1 = value["win1"] / num_rounds * 100
+            win_percent2 = value["win2"] / num_rounds * 100
+            print('{:^20s} {:^10} {:^10} {:^20s} {:^10} {:1^0} {:^10}'.format(
+                value["tag1"], value["win1"], win_percent1, value["tag2"], value["win2"],
+                win_percent2, draw))
 
 def one_round(player1, player2):
     boards = Boards()
@@ -140,5 +198,5 @@ def main():
 
         player.update_win()
     pygame.quit()
-main()
+# main()
 #
