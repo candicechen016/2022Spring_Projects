@@ -272,6 +272,7 @@ class GameState:
     # refer
 
     def evaluation(self, strategy='kings'):
+        score=0
         if strategy == 'kings':
             score = self.strategy_more_kings(self.player)
             print("strategy_more_kings",score)
