@@ -18,10 +18,10 @@ Two parallel-universes version of Checkers are also played on one board for two 
 
 
 1. Players are allowed to do following actions during their turn:
-    * ove ONE piece at the same universe TWICE (i.e. continuous two moves); continuous captures are allowed
-    * move ONE piece on EACH universe ONCE
-    * transfer ONE piece at one universe to ANOTHER universe ONCE per turn as their first or second move
-    * only allowed to transfer to an empty square and must go to an orthogonally-adjacent square on the other universe
+    * Move ONE piece at the same universe TWICE (i.e. continuous two moves); continuous captures are allowed
+    * Move ONE piece on EACH universe ONCE
+    * Transfer ONE piece at one universe to ANOTHER universe ONCE per turn as their first or second move
+    * Only allowed to transfer to an empty square and must go to an orthogonally-adjacent square on the other universe
     * CANNOT CAPTURE at the transferring round
 2. Winning conditions:
     * Once a player has NO PIECES on both boards on his turn, he loses.
@@ -30,7 +30,7 @@ Two parallel-universes version of Checkers are also played on one board for two 
     If two players keep chasing to each other without any capture for continuous 50 turns in total,
     we end the game as a draw.
 
-## Purpose
+## Goal
 1. Implement variant rules to Checkers.
 2. Design an interactive interface for users to compete with each other.
 3. Develop different Machine players using Minimax algorithm.
