@@ -139,6 +139,7 @@ class GameState:
         return empty
 
     def transfer_piece(self, move_dict, make_move=False):
+        print('transfer_move',move_dict)
         if move_dict['start_board'] == 1:
             start_board = self.boards.board1
             end_board = self.boards.board2
@@ -154,8 +155,8 @@ class GameState:
         piece = start_board[start_move[0]][start_move[1]]
         start_board[start_move[0]][start_move[1]] = 0
         end_board[end_move[0]][end_move[1]] = piece
-        piece.move(end_move[0], end_move[1])
         piece.board_num = move_dict['end_board']
+        piece.move(end_move[0], end_move[1])
         self.update_king(piece, [end_move[0], end_move[1]])
         return start_board, end_board
 
