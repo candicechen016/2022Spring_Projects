@@ -15,42 +15,53 @@ class humanPlayer:
         self.selected = None
         self.valid_moves=[]
 
-    def get_row_col_from_mouse(self,pos):
-        x, y = pos
-        print(x, y)
-        row = y // SQUARE_SIZE + 1
-        col = x // SQUARE_SIZE + 1
-        board_num = 1
-        if col > ROWS + 1:
-            col = col - ROWS - 2
-            board_num = 2
-        return row, col, board_num
-
     def is_valid_move(self,row,col,board_num):
         for move in self.valid_moves:
+            print(move)
             for i in range(len(move)):
+                print('move[i]', move[i])
                 if board_num==move[i]['end_board']:
                     if [row,col]==move[i]['end_move']:
                         return move[i]
         return False
 
+    # def select(self, row, col, board_num, gameState):
+    #     if self.selected:
+    #         next_move = self.is_valid_move(row, col, board_num)
+    #         self.selected = None
+    #         if next_move:
+    #             return next_move
+    #         else:
+    #             return False
+    #
+    #     board=gameState.boards.board1 if board_num==1 else gameState.boards.board2
+    #     piece = board[row][col]
+    #     if piece != 0 and piece != 1 and piece.color == gameState.player:
+    #         self.selected = piece
+    #         one_moves,two_moves,transfer_moves = gameState.get_valid_moves_piece(piece,board,board_num)
+    #         self.valid_moves=one_moves[1]+one_moves[2]+two_moves+transfer_moves
+    #         print(self.valid_moves)
+    #         return False
+    #     return False
+
     def select(self, row, col, board_num, gameState):
         if self.selected:
             next_move = self.is_valid_move(row, col, board_num)
-            self.selected = None
             if next_move:
-                return next_move
+                return  next_move
             else:
-                return False
+                self.selected = None
+                self.select(row, col, gameState)
 
-        board=gameState.boards.board1 if board_num==1 else gameState.board2
-        piece = board[row][col]
-        if piece != 0 and piece != 1 and piece.color == self.gs.player:
+        board = gameState.boards.board1 if board_num == 1 else gameState.boards.board2
+        piece = piece = board[row][col]
+        if piece != 0 and piece.color == self.color:
             self.selected = piece
-            one_moves,two_moves,transfer_moves = gameState.get_valid_moves_piece(piece,board,board_num)
-            self.valid_moves=one_moves+two_moves+transfer_moves
-            return False
-        return False
+            one_moves, two_moves, transfer_moves = gameState.get_valid_moves_piece(piece)
+            self.valid_moves = one_moves[1] + one_moves[2] + two_moves + transfer_moves
+            print(self.valid_moves)
+            return
+
 
 
 class randomPlayer:

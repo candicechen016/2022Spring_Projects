@@ -14,9 +14,11 @@ from checkers.gameState import GameState
 
 class playGame:
     def __init__(self,window):
-        self.win=window
-        self.gs=GameState(WHITE, Boards(), 0)
+        self.gs=GameState(BLACK, Boards(), 0)
         self.turn_num=0
+        self.window = window
+        self.valid_moves = []
+        self.selected = None
 
 
     def draw_valid_moves(self,moves):
@@ -24,34 +26,26 @@ class playGame:
             for i in range(len(move)):
                 if move[i]['end_board']==1:
                     row,col=move[i]['end_move'][0]-1,move[i]['end_move'][1]-1
-                    pygame.draw.circle(self.win, GREEN,(col * SQUARE_SIZE + SQUARE_SIZE // 2, row * SQUARE_SIZE + SQUARE_SIZE // 2), 10)
+                    pygame.draw.circle(self.window, GREEN,(col * SQUARE_SIZE + SQUARE_SIZE // 2, row * SQUARE_SIZE + SQUARE_SIZE // 2), 10)
                 if move[i]['end_board'] == 2:
                     row, col = move[i]['end_move'][0]-1, move[i]['end_move'][1]+ROWS+1
-                    pygame.draw.circle(self.win, GREEN, (col * SQUARE_SIZE + SQUARE_SIZE//2, row * SQUARE_SIZE + SQUARE_SIZE//2), 10)
+                    pygame.draw.circle(self.window, GREEN, (col * SQUARE_SIZE + SQUARE_SIZE//2, row * SQUARE_SIZE + SQUARE_SIZE//2), 10)
 
-    def update_window(self,valid_moves=[]):
-        self.gs.boards.draw_board(self.win)
-        self.draw_valid_moves(valid_moves)
+    def update_window(self):
+        self.gs.boards.draw_board(self.window)
+        self.draw_valid_moves(self.valid_moves)
         pygame.display.update()
 
     def human_move(self, next_move):
-
         self.update_board(next_move)
         self.turn_num += 1
         if self.turn_num % 2 == 0:
             self.change_turn()
 
-    def update_board(self,next_move):
-        if next_move['start_board'] != next_move['end_board']:
-            self.gs.transfer_piece(next_move, make_move=True)
-        else:
-            if next_move['start_board'] == 1:
-                self.gs.update_board_normal(next_move, self.gs.boards.board1, make_move=True)
-            else:
-                self.gs.update_board_normal(next_move, self.gs.boards.board2, make_move=True)
-        self.gs.reset()
+
 
     def change_turn(self):
+        self.valid_moves=[]
         if self.gs.player == BLACK:
             self.gs.player = WHITE
             self.gs.opponent=BLACK
@@ -60,10 +54,21 @@ class playGame:
             self.gs.opponent = WHITE
 
     def computer_move(self, next_moves):
+        print('next_moveai',next_moves)
         for move in next_moves:
             self.update_board(move)
         self.turn_num+=2
         self.change_turn()
+
+    def get_row_col_from_mouse(self,pos):
+        x, y = pos
+        row = y // SQUARE_SIZE + 1
+        col = x // SQUARE_SIZE + 1
+        board_num = 1
+        if col > ROWS + 1:
+            col = col - ROWS - 2
+            board_num = 2
+        return row, col, board_num
 
     def game_over(self):
         all_moves = self.gs.get_all_valid_moves()
@@ -84,3 +89,48 @@ class playGame:
         if self.gs.no_capture >= 50:
             print('draw')
             return True
+
+    def select(self, row, col,board_num):
+        print('select',[row,col],board_num)
+        if self.selected:
+            result = self.human_move(row, col,board_num)
+            if not result:
+                self.selected = None
+                self.select(row, col,board_num)
+        board=self.gs.boards.board1 if board_num==1 else self.gs.boards.board2
+        piece = board[row][col]
+        if piece != 0 and piece and piece.color == self.gs.player:
+            self.selected = piece
+            one_moves, two_moves, transfer_moves = self.gs.get_valid_moves_piece(piece)
+            self.valid_moves = one_moves[1] + one_moves[2] + two_moves + transfer_moves
+            return True
+        return False
+
+    def is_valid_move(self,row,col,board_num):
+        for move in self.valid_moves:
+            for i in range(len(move)):
+                if board_num==move[i]['end_board']:
+                    if (row,col)==move[i]['end_move']:
+                        return move[i]
+        return False
+
+    def human_move(self, row, col, board_num):
+        move = self.is_valid_move(row, col, board_num)
+        if self.selected and move:
+            self.update_board(move)
+            self.turn_num += 1
+            if self.turn_num % 2 == 0:
+                self.change_turn()
+        else:
+            return False
+        return True
+
+    def update_board(self, next_move):
+        if next_move['start_board'] != next_move['end_board']:
+            self.gs.transfer_piece(next_move, make_move=True)
+        else:
+            if next_move['start_board'] == 1:
+                self.gs.update_board_normal(next_move, self.gs.boards.board1, make_move=True)
+            else:
+                self.gs.update_board_normal(next_move, self.gs.boards.board2, make_move=True)
+        self.gs.reset()

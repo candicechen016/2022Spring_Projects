@@ -1,4 +1,5 @@
 """
+
 IS597DS - Final Project
 Authors: Yawen Deng, Candice Chen
 
@@ -108,105 +109,30 @@ if __name__ == '__main__':
     run = True
     clock = pygame.time.Clock()
     WINDOW = pygame.display.set_mode((WIDTH * 2 + 2 * SQUARE_SIZE, HEIGHT))
+    game_type=1 # 1:hvr 2:hva
+    if game_type==1:
+        computer=randomPlayer(WHITE)
+    elif game_type==2:
+        computer= MinimaxPlayer(WHITE,'capture', 3)
+    game=playGame(WINDOW)
 
-
-    game = playGame(WINDOW)
-    mxplayer1 = MinimaxPlayer(WHITE, 'capture', 1)
-    mxplayer2 = MinimaxPlayer(BLACK, 'capture', 1)
-    rdplayer1 = randomPlayer(WHITE)
-    rdplayer2 = randomPlayer(BLACK)
-
-
-    # game_type:
-    # 1:hvh 2:hvr 3:hva 4:rva 5:ava
-    game_type = 4
-    if game_type==4:
-        game = playGame(WINDOW)
-        player1 = randomPlayer(WHITE)
-        player2 = MinimaxPlayer(BLACK, 'capture', 3)
-        while run:
-            clock.tick(60)
-
-            next_move = player1.get_next_move(game.gs)
-            game.computer_move(next_move)
-            game_result = game.gs.check_win(next_move)
-
-            if game.game_over():
+    while run:
+        clock.tick(60)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
                 run = False
 
-            next_move = player2.get_next_move(game.gs)
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pos = pygame.mouse.get_pos()
+                row, col, board_num= game.get_row_col_from_mouse(pos)
+                next_move = game.select(row, col, board_num)
+
+        if game.gs.player == WHITE:
+            next_move = computer.get_next_move(game.gs)
             game.computer_move(next_move)
-            game_result = game.gs.check_win(next_move)
 
-            if game.game_over():
-                run = False
+        game.update_window()
 
-            game.update()
-
-        pygame.quit()
-
-
-
-
-
-
-
-    # while run:
-    #     clock.tick(60)
-    #
-    #     if game.turn == WHITE:
-    #         value, new_board = minimax(game.get_board(), 4, WHITE, game)
-    #         game.ai_move(new_board)
-    #
-    #     if game.winner() != None:
-    #         print(game.winner())
-    #         run = False
-    #
-    #     for event in pygame.event.get():
-    #         if event.type == pygame.QUIT:
-    #             run = False
-    #
-    #         if event.type == pygame.MOUSEBUTTONDOWN:
-    #             pos = pygame.mouse.get_pos()
-    #             row, col = get_row_col_from_mouse(pos)
-    #             game.select(row, col)
-    #
-    #     game.update()
-    #
-    # pygame.quit()
-    #
-    #
-    # while run:
-    #     clock.tick(60)
-    #     if game.gs.player == computer.color:
-    #         next_move = computer.get_next_move(game.gs)
-    #         game.ai_move(next_move)
-    #
-    #     if gs:
-    #         print(game.winner())
-    #         run = False
-    #
-    #     for event in pygame.event.get():
-    #         if event.type == pygame.QUIT:
-    #             run = False
-    #
-    #         if player.gs.player == BLACK:
-    #             next_move = rdplayer1.get_next_move(player.gs)
-    #             player.ai_move(next_move)
-    #
-    #     if random:
-    #         if  player.gs.player == WHITE:
-    #             next_move = rdplayer.get_next_move(player.gs)
-    #             player.ai_move(next_move)
-    #
-    #     if not cvc:
-    #         if event.type == pygame.MOUSEBUTTONDOWN:
-    #             pos = pygame.mouse.get_pos()
-    #             row, col = get_row_col_from_mouse(pos)
-    #             game.select(row, col)
-    #
-    #     game.update()
-    #
-    # pygame.quit()
+    pygame.quit()
 
 
