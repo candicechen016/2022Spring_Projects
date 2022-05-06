@@ -1,5 +1,4 @@
 """
-
 Reference:
 Our structure of the playGame class mainly referred to this source:
 https://github.com/techwithtim/Python-Checkers-AI/blob/master/checkers/game.py
@@ -42,7 +41,6 @@ class playGame:
         self.turn_num += 1
         if self.turn_num % 2 == 0:
             self.change_turn()
-
 
     def computer_move(self, next_moves):
         for move in next_moves:

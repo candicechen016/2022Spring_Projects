@@ -1,5 +1,5 @@
 """
-Player module
+Player module: Random Player and Minimax Player
 """
 
 import random
@@ -46,20 +46,22 @@ class MinimaxPlayer:
 
     def get_next_move(self, gamestate):
         next_move_options = gamestate.get_all_valid_moves()
+        print("next_move_options", len(next_move_options))
         best_move = None
         highest_score = float('-inf')
         if next_move_options:
             for idx, next_move in enumerate(next_move_options):
                 gamestate.reset()
                 next_gamestate = simulate_move(gamestate, next_move)
-                node_score = self.minimax_moves(gamestate=next_gamestate, max_player=True, depth=self.depth)
+                node_score = self.minimax_moves(alpha=float("-inf"), beta=float("+inf"), gamestate=next_gamestate,
+                                                max_player=True, depth=self.depth)
                 if node_score > highest_score:
                     highest_score = node_score
                     best_move = next_move
-        print("best_move", best_move)
+
         return best_move
 
-    def minimax_moves(self, gamestate, max_player, depth):
+    def minimax_moves(self, alpha, beta, gamestate, max_player, depth):
         """
         O(n^m), n: number of nodes, m:depth
 
@@ -69,6 +71,7 @@ class MinimaxPlayer:
         next_move_options = gamestate.get_all_valid_moves()
         gamestate.player = WHITE if gamestate.player == BLACK else BLACK
         gamestate.opponent = WHITE if gamestate.opponent == BLACK else BLACK
+
         if next_move_options == [] or depth == 0 or gamestate.game_over():
             return gamestate.evaluation(self.strategy, next_move_options)
         if max_player:
@@ -78,22 +81,22 @@ class MinimaxPlayer:
                 # generate new gamestate
                 next_gamestate = simulate_move(gamestate, next_move_info)
                 # evaluation
-                value = self.minimax_moves(gamestate=next_gamestate, max_player=False, depth=depth - 1)
-                print("compare", "max_value", max_value, "value", value)
+                value = self.minimax_moves(alpha, beta, gamestate=next_gamestate, max_player=False, depth=depth - 1)
                 max_value = max(max_value, value)
+                alpha = max(alpha, value)
+                if beta <= alpha:
+                    break
 
-            print("max_value", max_value)
             return max_value
         else:
-            print("min_player")
             min_value = float('inf')
             for next_move_info in next_move_options:
-                print("next_move_info:", next_move_info)
                 next_gamestate = simulate_move(gamestate, next_move_info)
-                value = self.minimax_moves(gamestate=next_gamestate, max_player=True, depth=depth - 1)
-                print("compare", "min_value", min_value, "value", value)
+                value = self.minimax_moves(alpha, beta, gamestate=next_gamestate, max_player=True, depth=depth - 1)
                 min_value = min(min_value, value)
-            print("final min_value", min_value)
+                beta = min(beta, value)
+                if beta <= alpha:
+                    break
             return min_value
 
 

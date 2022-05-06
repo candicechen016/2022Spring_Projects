@@ -1,6 +1,11 @@
-#refer
-import pygame
+"""
+Elements of Boards and Piece for pygame.
 
+Reference:
+https://github.com/techwithtim/Python-Checkers-AI/tree/master/checkers
+"""
+
+import pygame
 from checkers.cons import BLUE, RED, ROWS, SQUARE_SIZE, WHITE, BLACK, GOLD, SILVER, CROWN
 
 
@@ -73,7 +78,7 @@ class Piece:
         self.color = color
         self.sign='w' if self.color==WHITE else 'b'
         self.king = False
-        self.coat=coat
+        self.coat=coat  # initial: Board1-GOLD; Board2-SILVER won't change during the game
         self.x = 0
         self.y = 0
         self.calc_pos()
