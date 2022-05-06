@@ -15,13 +15,10 @@ class GameState:
         self.boards = boards
         self.player = player
         self.opponent = BLACK if self.player == WHITE else WHITE
-        self.capture_count = 0
         self.no_capture = no_capture
         self.reset()
 
-
     def reset(self):
-
         self.positions = {'board1': self.get_positions(self.player, self.boards.board1),
                           'board2': self.get_positions(self.player, self.boards.board2)}
         self.opponent_positions = {'board1': self.get_positions(self.opponent, self.boards.board1),
@@ -41,21 +38,19 @@ class GameState:
         captured_left = False
         for row_dir in row_dirs:
             next_row = position[0] + row_dir
-            for col_dir in [-1, 1]:
+            for col_dir in (-1, 1):
                 next_col = position[1] + col_dir
                 next_position = board[next_row][next_col]
                 if next_position == 1:
                     continue
                 elif next_position == 0:
                     if not captured:
-                        next_move = {'end_move': [next_row, next_col], 'end_board': board_num, 'capture': captured}
+                        next_move = {'end_move': (next_row, next_col), 'end_board': board_num, 'capture': captured}
                         next_moves.append(next_move)
                 elif next_position.color == self.opponent and not transfer:
                     if board[next_row + row_dir][next_col + col_dir] == 0:
-                        print('-------------------------------------------')
-                        print('postion',position)
-                        captured.append([next_row, next_col])
-                        print('captured:',captured)
+                        captured.append((next_row, next_col))
+                        print('captured:', captured)
                         piece = board[next_row][next_col]
                         board[next_row][next_col] = 0
                         if col_dir == -1:
@@ -63,48 +58,51 @@ class GameState:
                         if (next_row + row_dir == ROWS and self.player == WHITE) or (
                                 next_row + row_dir == 1 and self.player == BLACK):
                             row_dirs = [-1, 1]
-                        moves = self.one_move(row_dirs, [next_row + row_dir, next_col + col_dir], board, board_num,
+                        moves = self.one_move(row_dirs, (next_row + row_dir, next_col + col_dir), board, board_num,
                                               captured, transfer)
                         next_moves += moves
                         del captured[-1]
                         board[next_row][next_col] = piece
+                        if next_row + row_dir == ROWS and self.player == WHITE:
+                            row_dirs = (1)
+                        elif next_row + row_dir == 1 and self.player == BLACK:
+                            row_dirs = (-1)
         if captured_left == False and captured:
-            next_move = {'end_move': [position[0], position[1]], 'end_board': board_num,
-                         'capture': copy.deepcopy(captured)}
+            next_move = {'end_move': (position[0], position[1]), 'end_board': board_num,
+                         'capture': captured}
             next_moves.append(next_move)
         return next_moves
 
-    def get_moves(self, piece, board, board_num):
-        one_move_list = []
-        # one_move_boards = []
+    def get_normal_moves(self, piece, board, board_num):
+        """
+        :return:
+        one_move_list: dict of all one valid steps for each board
+        two_move_list: all two continuous steps for each board
+        end_move_list: all end steps (row,col)
+        """
+        one_move_list = {1: [], 2: []}
         two_move_list = []
-        # two_move_boards = []
         row, col = piece.row, piece.col
-        end_moves = self.one_move(piece.direction, [row, col], board, board_num)
+        end_moves = self.one_move(piece.direction, (row, col), board, board_num)
         for m in end_moves:
-            m['start_move'] = [row, col]
+            m['start_move'] = (row, col)
             m['start_board'] = board_num
             one_move_board = self.update_board_normal(m, board)
-            one_move_list.append(m)
-            # one_move_boards.append(one_move_board)
+            one_move_list[board_num].append((m))
             second_moves = self.one_move(one_move_board[m['end_move'][0]][m['end_move'][1]].direction,
-                                         m['end_move'],one_move_board, board_num)
+                                         m['end_move'], one_move_board, board_num)
             if second_moves:
                 for n in second_moves:
                     n['start_move'] = m['end_move']
                     n['start_board'] = board_num
-                    # second_board = self.update_board_normal(n, one_move_board)
-                    two_move_list.append([m, n])
-                    # two_move_boards.append(second_board)
+                    two_move_list.append((m, n))
         return one_move_list, two_move_list
 
-    def update_king(self, piece, position):
+    def update_king(self, piece, position, make_move):
         if position[0] == ROWS and piece.color == WHITE:
             piece.make_king()
-            self.boards.w_king_left += 1
         elif position[0] == 1 and piece.color == BLACK:
             piece.make_king()
-            self.boards.b_king_left += 1
 
     def update_board_normal(self, move, board, make_move=False):
         if make_move:
@@ -112,33 +110,21 @@ class GameState:
         else:
             board_temp = copy.deepcopy(board)
         start_piece = board_temp[move['start_move'][0]][move['start_move'][1]]
+        for cap in move['capture']:
+            if cap[0] == ROWS - 1 and board_temp[cap[0]][cap[1]].color == WHITE:
+                start_piece.make_king()
+            elif cap[0] == 2 and board_temp[cap[0]][cap[1]].color == BLACK:
+                start_piece.make_king()
+            board_temp[cap[0]][cap[1]] = 0
         board_temp[move['end_move'][0]][move['end_move'][1]] = start_piece
-        if make_move:
-            start_piece.move(move['end_move'][0], move['end_move'][1])
-            self.capture_count += len(move['capture'])
-        board_temp[move['start_move'][0]][move['start_move'][1]] = 0
-
+        start_piece.move(move['end_move'][0], move['end_move'][1])
         self.update_king(start_piece, move['end_move'])
-
-        if move['capture']:
-
-            for cap in move['capture']:
-                if board_temp[cap[0]][cap[1]].color == WHITE:
-                    self.boards.w_left_ = -1
-                    if cap[0] == ROWS - 1:
-                        start_piece.make_king()
-                        self.boards.w_king_left += 1
-                else:
-                    self.boards.b_left -= 1
-                    if cap[0] == 2:
-                        start_piece.make_king()
-                        self.boards.b_king_left += 1
-                board_temp[cap[0]][cap[1]] = 0
+        board_temp[move['start_move'][0]][move['start_move'][1]] = 0
         return board_temp
 
     def find_orthogonally_neighbors(self, piece_position, board):
         x, y = piece_position
-        neighbors = [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]
+        neighbors = ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1))
         empty = []
         for n in neighbors:
             if board[n[0]][n[1]] == 0:
@@ -146,14 +132,12 @@ class GameState:
         return empty
 
     def transfer_piece(self, move_dict, make_move=False):
-        # start_board = self.boards.board1 if move_dict['start_board'] == 1 else self.boards.board2
-        if move_dict['start_board']==1:
+        if move_dict['start_board'] == 1:
             start_board = self.boards.board1
             end_board = self.boards.board2
         else:
             start_board = self.boards.board2
             end_board = self.boards.board1
-        # end_board = self.boards.board1 if move_dict['end_board'] == 1 else self.boards.board2
 
         if not make_move:
             start_board = copy.deepcopy(start_board)
@@ -163,71 +147,53 @@ class GameState:
         piece = start_board[start_move[0]][start_move[1]]
         start_board[start_move[0]][start_move[1]] = 0
         end_board[end_move[0]][end_move[1]] = piece
-        if make_move:
-            piece.move(end_move[0], end_move[1])
-            piece.board_num=move_dict['end_board']
-            piece.calc_pos()
+        piece.move(end_move[0], end_move[1])
+        piece.board_num = move_dict['end_board']
         self.update_king(piece, [end_move[0], end_move[1]])
         return start_board, end_board
 
-    def get_transferred_list(self, piece, board_num):
-        end_board_num = 2 if board_num == 1 else 1
-        other_board = self.boards.board2 if board_num == 1 else self.boards.board1
+    def get_transferred_list(self, piece, start_board_num):
+        end_board_num = 2 if start_board_num == 1 else 1
+        end_board = self.boards.board2 if start_board_num == 1 else self.boards.board1
         transfer_move_list = []
-        # transfer_board_list = []
 
-        list = self.find_orthogonally_neighbors([piece.row, piece.col], other_board)
-        for move in list:
-            to_move = {'start_move': [piece.row, piece.col], 'start_board': board_num, 'end_move': move,
-                           'end_board': end_board_num, 'capture':[]}
+        nb_list = self.find_orthogonally_neighbors([piece.row, piece.col], end_board)
+        for move in nb_list:
+            to_move = {'start_move': (piece.row, piece.col), 'start_board': start_board_num, 'end_move': move,
+                       'end_board': end_board_num, 'capture': []}
 
             new_start_board, new_end_board = self.transfer_piece(to_move)
 
             second_move_list = self.one_move(new_end_board[move[0]][move[1]].direction, move, new_end_board,
-                                                 end_board_num, transfer=True)
+                                             end_board_num, transfer=True)
             if second_move_list:
                 for m in second_move_list:
                     m['start_move'] = move
                     m['start_board'] = end_board_num
-                        # second_move_board=self.update_board_normal(m,new_end_board)
-                        # transfer_board_list.append(second_move_board)
-                    transfer_move_list.append([to_move, m])
+                    transfer_move_list.append((to_move, m))
         return transfer_move_list
 
-    def get_valid_moves_piece(self,piece,board,board_num):
+    def get_valid_moves_piece(self, piece, board, board_num):
         one_move_list, two_move_list, = self.get_moves(piece, board, board_num)
-        transfer_move_list= self.get_transferred_list(piece, board_num)
-        return one_move_list,two_move_list,transfer_move_list
+        transfer_move_list = self.get_transferred_list(piece, board_num)
+        return one_move_list, two_move_list, transfer_move_list
 
     def get_valid_moves(self):
-        one_move_list1=[]
-        one_move_list2=[]
+        one_move_list1 = []
         two_move_list=[]
-        transfer_move_list=[]
+        transfer_move_list = []
+        all_one_moves={1:[],2:[]}
         self.reset()
-        for b in ['board1','board2']:
+        for b in ['board1', 'board2']:
             for piece in self.positions[b]:
-                board=self.boards.board1 if b=='board1' else self.boards.board2
-                board_num=1 if b=='board1' else 2
-                one_moves,two_moves,transfer_moves=self.get_valid_moves_piece(piece,board,board_num)
-                # if player:
-                #     player.gs.boards.draw_board(player.win)
-                #     print('piece:',[piece.row,piece.col])
-                #     pygame.draw.circle(player.win, (0, 255, 0), (piece.x, piece.y), 50, 5)
-                #     one_move_list = [[m] for m in one_moves]
-                #     valid_moves = one_move_list + two_moves + transfer_moves
-                #     player.draw_valid_moves(valid_moves)
-                #     pygame.display.update()
-                #     pygame.time.delay(500)
-
-                if b=='board1':
-                    one_move_list1+=one_moves
-                else:
-                    one_move_list2+=one_moves
-                two_move_list+=two_moves
-                transfer_move_list+=transfer_moves
-        one_move_comb = self.first_move_comb(one_move_list1, one_move_list2)
-        return {'one_move': one_move_comb,'two_move': two_move_list, 'transfer_move': transfer_move_list}
+                board = self.boards.board1 if b == 'board1' else self.boards.board2
+                board_num = 1 if b == 'board1' else 2
+                one_moves, two_moves, transfer_moves = self.get_valid_moves_piece(piece, board, board_num)
+                all_one_moves[board_num]+=one_moves[board_num]
+                two_move_list += two_moves
+                transfer_move_list += transfer_moves
+        one_move_comb = self.first_move_comb(all_one_moves)
+        return {'one_move': one_move_comb, 'two_move': two_move_list, 'transfer_move': transfer_move_list}
 
     def get_all_valid_moves(self):
         all_moves = []
@@ -262,20 +228,18 @@ class GameState:
             return 'draw'
         return False
 
-    def first_move_comb(self, moves1, moves2):
+    def first_move_comb(self, all_one_moves):
         one_move_list = []
-        for m in moves1:
-            for n in moves2:
+        for m in all_one_moves[1]:
+            for n in all_one_moves[2]:
                 one_move_list.append([m, n])
         return one_move_list
 
-    # refer
-
     def evaluation(self, strategy='kings'):
-        score=0
+        score = 0
         if strategy == 'kings':
             score = self.strategy_more_kings(self.player)
-            print("strategy_more_kings",score)
+            print("strategy_more_kings", score)
 
         if strategy == 'capture':
             score = self.strategy_capture()
@@ -293,4 +257,3 @@ class GameState:
 
     def strategy_capture(self):
         return self.capture_count
-

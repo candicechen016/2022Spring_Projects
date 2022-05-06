@@ -9,6 +9,48 @@ from copy import deepcopy
 import pygame
 from checkers.cons import GREEN, SQUARE_SIZE, ROWS, WHITE, BLACK
 
+class humanPlayer:
+    def __init__(self,color):
+        self.color = color
+        self.selected = None
+        self.valid_moves=[]
+
+    def get_row_col_from_mouse(self,pos):
+        x, y = pos
+        print(x, y)
+        row = y // SQUARE_SIZE + 1
+        col = x // SQUARE_SIZE + 1
+        board_num = 1
+        if col > ROWS + 1:
+            col = col - ROWS - 2
+            board_num = 2
+        return row, col, board_num
+
+    def is_valid_move(self,row,col,board_num):
+        for move in self.valid_moves:
+            for i in range(len(move)):
+                if board_num==move[i]['end_board']:
+                    if [row,col]==move[i]['end_move']:
+                        return move[i]
+        return False
+
+    def select(self, row, col, board_num, gameState):
+        if self.selected:
+            next_move = self.is_valid_move(row, col, board_num)
+            self.selected = None
+            if next_move:
+                return next_move
+            else:
+                return False
+
+        board=gameState.boards.board1 if board_num==1 else gameState.board2
+        piece = board[row][col]
+        if piece != 0 and piece != 1 and piece.color == self.gs.player:
+            self.selected = piece
+            one_moves,two_moves,transfer_moves = gameState.get_valid_moves_piece(piece,board,board_num)
+            self.valid_moves=one_moves+two_moves+transfer_moves
+            return False
+        return False
 
 
 class randomPlayer:
@@ -47,13 +89,13 @@ class MinimaxPlayer:
         self.strategy = strategy  # 'kings' or 'capture'
         self.depth = depth
 
-    def get_next_move(self, gamestate,player):
+    def get_next_move(self, gamestate):
         next_move_options = gamestate.get_all_valid_moves()
         best_move = None
         highest_score = 0
 
         for idx, next_move in enumerate(next_move_options):
-            next_gamestate = simulate_move(gamestate, next_move,player)
+            next_gamestate = simulate_move(gamestate, next_move)
             node_score = self.minimax_moves(player,gamestate=next_gamestate, max_player=True, depth=self.depth)
             if node_score >= highest_score:
                 highest_score = node_score
@@ -152,105 +194,9 @@ def simulate_move(game, next_move,player):
     return simulated_game
 
 
-#refer
-
-class humanPlayer:
-    def __init__(self,win,gs):
-        self.player_tag = "Human"
-        self.win=win
-        self.gs=gs
-        self.selected = None
-        # self.turn = BLACK
-        self.turn_num=0
-        self.valid_moves=[]
-        self.selected = None
 
 
-    def draw_valid_moves(self,moves):
-        for move in moves:
-            for i in range(len(move)):
-                if move[i]['end_board']==1:
-                    row,col=move[i]['end_move'][0]-1,move[i]['end_move'][1]-1
-                    pygame.draw.circle(self.win, GREEN,(col * SQUARE_SIZE + SQUARE_SIZE // 2, row * SQUARE_SIZE + SQUARE_SIZE // 2), 10)
-                if move[i]['end_board'] == 2:
-                    row, col = move[i]['end_move'][0]-1, move[i]['end_move'][1]+ROWS+1
-                    pygame.draw.circle(self.win, GREEN, (col * SQUARE_SIZE + SQUARE_SIZE//2, row * SQUARE_SIZE + SQUARE_SIZE//2), 10)
 
-    #refer
-    def update_win(self):
-        self.gs.boards.draw_board(self.win)
-        self.draw_valid_moves(self.valid_moves)
-        pygame.display.update()
-
-    def select(self, row, col,board_num):
-        print('select',[row,col],board_num)
-        if self.selected:
-            result = self._move(row, col,board_num)
-            if not result:
-                self.selected = None
-                self.select(row, col,board_num)
-
-        board=self.gs.boards.board1 if board_num==1 else self.gs.boards.board2
-        piece = board[row][col]
-        if piece != 0 and piece and piece.color == self.gs.player:
-            self.selected = piece
-            one_moves,two_moves,transfer_moves = self.gs.get_valid_moves_piece(piece,board,board_num)
-            one_move_list=[[m] for m in one_moves]
-            self.valid_moves=one_move_list+two_moves+transfer_moves
-
-            return True
-        return False
-
-    def get_move(self,row,col,board_num):
-        for move in self.valid_moves:
-            for i in range(len(move)):
-                if board_num==move[i]['end_board']:
-                    if [row,col]==move[i]['end_move']:
-                        return move[i]
-                else:
-                    continue
-        return False
-
-    def _move(self, row, col,board_num):
-        board = self.gs.boards.board1 if board_num == 1 else self.gs.boards.board2
-        piece = board[row][col]
-
-        move=self.get_move(row,col,board_num)
-        if self.selected and piece == 0 and move:
-            if move['start_board']==move['end_board']:
-                self.gs.update_board_normal(move, board, True)
-            else:
-                self.gs.transfer_piece(move, make_move=True)
-            self.turn_num+=1
-            if self.turn_num%2==0:
-                self.change_turn()
-        else:
-            return False
-        return True
-
-
-    def change_turn(self):
-        self.valid_moves = {}
-        if self.gs.player == BLACK:
-            self.gs.player = WHITE
-            self.gs.opponent=BLACK
-        else:
-            self.gs.player = BLACK
-            self.gs.opponent = WHITE
-
-    def ai_move(self, next_move):
-        for move in next_move:
-            if move['start_board'] != move['end_board']:
-                new_board1, new_board2 = self.gs.transfer_piece(move, make_move=True)
-            else:
-                if move['start_board'] == 1:
-                    new_board1 = self.gs.update_board_normal(move, self.gs.boards.board1, make_move=True)
-                    new_board2 = self.gs.boards.board2
-                else:
-                    new_board2 = self.gs.update_board_normal(move, self.gs.boards.board2, make_move=True)
-                    new_board1 = self.gs.boards.board1
-        self.gs.reset()
-        self.change_turn()
 
 
 
