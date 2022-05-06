@@ -136,13 +136,11 @@ def simulate_move(game, next_move,player):
         if piece!=0:
             one_move_list = [[m] for m in one_moves]
             valid_moves = one_move_list + two_moves + transfer_moves
-            if simulated_game.player==WHITE:
-                pygame.draw.circle(player.win, (0, 255, 0), (piece.x, piece.y), 30, 5)
-            else:
-                pygame.draw.circle(player.win, (255, 255, 0), (piece.x, piece.y), 30, 5)
+            pygame.draw.circle(player.win, (0, 255, 0), (piece.x, piece.y), 30, 5)
+
             player.draw_valid_moves(valid_moves)
             pygame.display.update()
-            pygame.time.delay(500)
+            pygame.time.delay(200)
         if move['start_board'] != move['end_board']:
             simulated_game.transfer_piece(move, make_move=True)
         else:
@@ -247,10 +245,10 @@ class humanPlayer:
             else:
                 if move['start_board'] == 1:
                     new_board1 = self.gs.update_board_normal(move, self.gs.boards.board1, make_move=True)
-                    new_board2 = self.gs.board2
+                    new_board2 = self.gs.boards.board2
                 else:
                     new_board2 = self.gs.update_board_normal(move, self.gs.boards.board2, make_move=True)
-                    new_board1 = self.gs.board1
+                    new_board1 = self.gs.boards.board1
         self.gs.reset()
         self.change_turn()
 

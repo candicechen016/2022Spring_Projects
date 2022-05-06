@@ -175,13 +175,16 @@ def main():
     boards=Boards()
     clock = pygame.time.Clock()
     WIN= pygame.display.set_mode((WIDTH*2+2*SQUARE_SIZE, HEIGHT))
-    # mode='huamn'
-    mx=True
+    random = False
+    mx=True #ax
+    cvc=False#final
     gs = GameState(BLACK, boards, 0)
     player = humanPlayer(WIN, gs)
-    mxplayer1=MinimaxPlayer(WHITE,'king',1)
+    mxplayer1=MinimaxPlayer(WHITE,'capture',1)
     mxplayer2 = MinimaxPlayer(BLACK, 'capture', 1)
-    while True:
+    rdplayer=randomPlayer(WHITE)
+    rdplayer1 = randomPlayer(BLACK)
+    while run:
         clock.tick(60)
         for event in pygame.event.get():
              if event.type==pygame.QUIT:
@@ -191,16 +194,26 @@ def main():
                 next_move = mxplayer1.get_next_move(player.gs,player)
                 player.ai_move(next_move)
 
-            if  player.gs.player == BLACK:
-                next_move = mxplayer2.get_next_move(player.gs,player)
+        if cvc:
+            if  player.gs.player == WHITE:
+                next_move = mxplayer1.get_next_move(player.gs,player)
                 player.ai_move(next_move)
 
+            if player.gs.player == BLACK:
+                next_move = rdplayer1.get_next_move(player.gs)
+                player.ai_move(next_move)
 
-        # if event.type == pygame.MOUSEBUTTONDOWN:
-        #     pos = pygame.mouse.get_pos()
-        #     row, col,board_num = get_row_col_from_mouse(pos)
-        #     player.select(row, col,board_num)
-        #     boards.draw_board(WIN)
+        if random:
+            if  player.gs.player == WHITE:
+                next_move = rdplayer.get_next_move(player.gs)
+                player.ai_move(next_move)
+
+        if not cvc:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pos = pygame.mouse.get_pos()
+                row, col,board_num = get_row_col_from_mouse(pos)
+                player.select(row, col,board_num)
+                boards.draw_board(WIN)
 
         player.update_win()
     pygame.quit()
