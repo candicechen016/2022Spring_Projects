@@ -13,23 +13,24 @@ from checkers.gameState import GameState
 
 
 class playGame:
-    def __init__(self,window):
-        self.gs=GameState(BLACK, Boards(), 0)
-        self.turn_num=0
+    def __init__(self, window):
+        self.gs = GameState(BLACK, Boards(), 0)
+        self.turn_num = 0
         self.window = window
         self.valid_moves = []
         self.selected = None
 
-
-    def draw_valid_moves(self,moves):
+    def draw_valid_moves(self, moves):
         for move in moves:
             for i in range(len(move)):
-                if move[i]['end_board']==1:
-                    row,col=move[i]['end_move'][0]-1,move[i]['end_move'][1]-1
-                    pygame.draw.circle(self.window, GREEN,(col * SQUARE_SIZE + SQUARE_SIZE // 2, row * SQUARE_SIZE + SQUARE_SIZE // 2), 10)
+                if move[i]['end_board'] == 1:
+                    row, col = move[i]['end_move'][0] - 1, move[i]['end_move'][1] - 1
+                    pygame.draw.circle(self.window, GREEN,
+                                       (col * SQUARE_SIZE + SQUARE_SIZE // 2, row * SQUARE_SIZE + SQUARE_SIZE // 2), 10)
                 if move[i]['end_board'] == 2:
-                    row, col = move[i]['end_move'][0]-1, move[i]['end_move'][1]+ROWS+1
-                    pygame.draw.circle(self.window, GREEN, (col * SQUARE_SIZE + SQUARE_SIZE//2, row * SQUARE_SIZE + SQUARE_SIZE//2), 10)
+                    row, col = move[i]['end_move'][0] - 1, move[i]['end_move'][1] + ROWS + 1
+                    pygame.draw.circle(self.window, GREEN,
+                                       (col * SQUARE_SIZE + SQUARE_SIZE // 2, row * SQUARE_SIZE + SQUARE_SIZE // 2), 10)
 
     def update_window(self):
         self.gs.boards.draw_board(self.window)
@@ -43,24 +44,22 @@ class playGame:
             self.change_turn()
 
 
+    def computer_move(self, next_moves):
+        for move in next_moves:
+            self.update_board(move)
+        self.turn_num += 2
+        self.change_turn()
 
     def change_turn(self):
-        self.valid_moves=[]
+        self.valid_moves = []
         if self.gs.player == BLACK:
             self.gs.player = WHITE
-            self.gs.opponent=BLACK
+            self.gs.opponent = BLACK
         else:
             self.gs.player = BLACK
             self.gs.opponent = WHITE
 
-    def computer_move(self, next_moves):
-        print('next_moveai',next_moves)
-        for move in next_moves:
-            self.update_board(move)
-        self.turn_num+=2
-        self.change_turn()
-
-    def get_row_col_from_mouse(self,pos):
+    def get_row_col_from_mouse(self, pos):
         x, y = pos
         row = y // SQUARE_SIZE + 1
         col = x // SQUARE_SIZE + 1
@@ -70,34 +69,13 @@ class playGame:
             board_num = 2
         return row, col, board_num
 
-    def game_over(self):
-        all_moves = self.gs.get_all_valid_moves()
-        has_pieces = 0
-        # condition 1: the player has NO STEPS and NO WAY to transfer to both boards
-        if not all_moves:
-            print('no_moves:', self.gs.opponent, 'wins')
-            return True
-        for board_name in ['board1', 'board2']:
-            # condition 2: the player has NO PIECES on Both boards
-            if len(self.gs.positions[board_name]) == 0:
-                has_pieces += 1
-                continue
-        if has_pieces == 2:
-            print('No piece:', self.gs.opponent, 'wins')
-            return True
-        # draw: no capture in 50 turns
-        if self.gs.no_capture >= 50:
-            print('draw')
-            return True
-
-    def select(self, row, col,board_num):
-        print('select',[row,col],board_num)
+    def select(self, row, col, board_num):
         if self.selected:
-            result = self.human_move(row, col,board_num)
+            result = self.human_move(row, col, board_num)
             if not result:
                 self.selected = None
-                self.select(row, col,board_num)
-        board=self.gs.boards.board1 if board_num==1 else self.gs.boards.board2
+                self.select(row, col, board_num)
+        board = self.gs.boards.board1 if board_num == 1 else self.gs.boards.board2
         piece = board[row][col]
         if piece != 0 and piece and piece.color == self.gs.player:
             self.selected = piece
@@ -106,12 +84,11 @@ class playGame:
             return True
         return False
 
-    def is_valid_move(self,row,col,board_num):
+    def is_valid_move(self, row, col, board_num):
         for move in self.valid_moves:
-            for i in range(len(move)):
-                if board_num==move[i]['end_board']:
-                    if (row,col)==move[i]['end_move']:
-                        return move[i]
+            if board_num == move[0]['end_board']:
+                if (row, col) == move[0]['end_move']:
+                    return move[0]
         return False
 
     def human_move(self, row, col, board_num):

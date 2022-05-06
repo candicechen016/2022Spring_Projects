@@ -20,7 +20,7 @@ from checkers.elements import Boards
 
 from checkers.gameState import GameState
 from checkers.playGame import playGame
-from checkers.player import randomPlayer, humanPlayer, MinimaxPlayer
+from checkers.player import randomPlayer, MinimaxPlayer
 
 def one_turn(player, game):
     next_move_options = game.get_valid_moves()
@@ -113,23 +113,28 @@ if __name__ == '__main__':
     if game_type==1:
         computer=randomPlayer(WHITE)
     elif game_type==2:
-        computer= MinimaxPlayer(WHITE,'capture', 3)
+        computer= MinimaxPlayer(WHITE,'capture', 2)
     game=playGame(WINDOW)
 
     while run:
         clock.tick(60)
+
+        if game.gs.player == WHITE:
+            next_move = computer.get_next_move(game.gs)
+            game.computer_move(next_move)
+
+        if game.gs.game_over():
+            print('game over!')
+            run = False
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
-                row, col, board_num= game.get_row_col_from_mouse(pos)
+                row, col, board_num = game.get_row_col_from_mouse(pos)
                 next_move = game.select(row, col, board_num)
-
-        if game.gs.player == WHITE:
-            next_move = computer.get_next_move(game.gs)
-            game.computer_move(next_move)
 
         game.update_window()
 
