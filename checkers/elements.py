@@ -77,7 +77,7 @@ class Piece:
         self.x = 0
         self.y = 0
         self.calc_pos()
-        self.direction=(-1) if self.color==BLACK else (1)
+        self.direction=(-1,) if self.color==BLACK else (1,)
 
     def calc_pos(self):
         self.y = SQUARE_SIZE * (self.row - 1) + SQUARE_SIZE // 2

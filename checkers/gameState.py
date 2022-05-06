@@ -25,6 +25,7 @@ class GameState:
                                    'board2': self.get_positions(self.opponent, self.boards.board2)}
 
     def get_positions(self, color, board):
+        print(board)
         positions1 = []
         for i in range(1, ROWS + 1):
             for j in range(1, ROWS + 1):
@@ -36,6 +37,7 @@ class GameState:
     def one_move(self, row_dirs, position, board, board_num, captured=[], transfer=False):
         next_moves = []
         captured_left = False
+        print("row_dirs",row_dirs)
         for row_dir in row_dirs:
             next_row = position[0] + row_dir
             for col_dir in (-1, 1):
@@ -83,6 +85,7 @@ class GameState:
         one_move_list = {1: [], 2: []}
         two_move_list = []
         row, col = piece.row, piece.col
+        print("piece.direction",piece.direction)
         end_moves = self.one_move(piece.direction, (row, col), board, board_num)
         for m in end_moves:
             m['start_move'] = (row, col)
@@ -98,7 +101,7 @@ class GameState:
                     two_move_list.append((m, n))
         return one_move_list, two_move_list
 
-    def update_king(self, piece, position, make_move):
+    def update_king(self, piece, position):
         if position[0] == ROWS and piece.color == WHITE:
             piece.make_king()
         elif position[0] == 1 and piece.color == BLACK:
@@ -174,7 +177,8 @@ class GameState:
         return transfer_move_list
 
     def get_valid_moves_piece(self, piece, board, board_num):
-        one_move_list, two_move_list, = self.get_moves(piece, board, board_num)
+        print("get_valid_moves_piece","piece",piece.direction)
+        one_move_list, two_move_list, = self.get_normal_moves(piece, board, board_num)
         transfer_move_list = self.get_transferred_list(piece, board_num)
         return one_move_list, two_move_list, transfer_move_list
 
@@ -186,6 +190,7 @@ class GameState:
         self.reset()
         for b in ['board1', 'board2']:
             for piece in self.positions[b]:
+                print("piece",piece,self.positions[b])
                 board = self.boards.board1 if b == 'board1' else self.boards.board2
                 board_num = 1 if b == 'board1' else 2
                 one_moves, two_moves, transfer_moves = self.get_valid_moves_piece(piece, board, board_num)
@@ -235,25 +240,50 @@ class GameState:
                 one_move_list.append([m, n])
         return one_move_list
 
-    def evaluation(self, strategy='kings'):
+    def evaluation(self, strategy,next_move_options):
         score = 0
         if strategy == 'kings':
             score = self.strategy_more_kings(self.player)
             print("strategy_more_kings", score)
 
         if strategy == 'capture':
-            score = self.strategy_capture()
+            score = self.strategy_capture(next_move_options)
         return score
 
     def strategy_more_kings(self, player):
+        w_left, b_left, w_king_left, b_king_left = 0, 0, 0, 0
+        for board in [self.boards.board1, self.boards.board2]:
+            for row in board:
+                for piece in row:
+                    if piece not in [0,1]:
+                        if piece.sign == 'w':
+                            w_left += 1
+                            if piece.king:
+                                w_king_left += 1
+                        elif piece.sign == 'b':
+                            b_left += 1
+                            if piece.king:
+                                b_king_left += 1
+
         if player == WHITE:
-            my_piece_total, opponent_piece_total = self.boards.w_left, self.boards.b_left
-            my_king, opponent_king = self.boards.w_king_left, self.boards.b_king_left
+            score = w_left - b_left + w_king_left * 1.5 - b_king_left * 1.5
         if player == BLACK:
-            my_piece_total, opponent_piece_total = self.boards.b_left, self.boards.w_left
-            my_king, opponent_king = self.boards.b_king_left, self.boards.w_king_left
-        score = my_piece_total - opponent_piece_total + my_king * 1.5 - opponent_king * 1.5
+            score = b_left - w_left + b_king_left * 1.5 - w_king_left * 1.5
+
         return score
 
-    def strategy_capture(self):
-        return self.capture_count
+    def strategy_capture(self, next_move_options):
+        single_capture = []
+        continuous_captures = []
+        for options in next_move_options:
+            for move in options:
+                has_capture = move['capture']
+                if has_capture:
+                    if len(has_capture) > 1:
+                        continuous_captures += has_capture
+                    else:
+                        single_capture += has_capture
+        score = len(set(single_capture)) + 2*len(set(continuous_captures))
+
+        return score
+

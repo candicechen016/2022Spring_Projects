@@ -80,9 +80,9 @@ class randomPlayer:
 
 class MinimaxPlayer:
 
-    def __init__(self, piece, strategy, depth):
-        self.player_tag = 'Minimax_{}[{}]'.format(strategy, depth)
-        self.color = piece
+    def __init__(self, color, strategy, depth):
+        self.player_tag = 'Minimax_{}_d{}'.format(strategy, depth)
+        self.color = color
         self.win_count = 0
         self.lose_count = 0
         self.draw_count = 0
@@ -92,40 +92,48 @@ class MinimaxPlayer:
     def get_next_move(self, gamestate):
         next_move_options = gamestate.get_all_valid_moves()
         best_move = None
-        highest_score = 0
-
-        for idx, next_move in enumerate(next_move_options):
-            next_gamestate = simulate_move(gamestate, next_move)
-            node_score = self.minimax_moves(player,gamestate=next_gamestate, max_player=True, depth=self.depth)
-            if node_score >= highest_score:
-                highest_score = node_score
-                best_move = next_move
-
+        highest_score = float('-inf')
+        if next_move_options:
+            for idx, next_move in enumerate(next_move_options):
+                gamestate.reset()
+                next_gamestate = simulate_move(gamestate, next_move)
+                node_score = self.minimax_moves(gamestate=next_gamestate, max_player=True, depth=self.depth)
+                if node_score > highest_score:
+                    highest_score = node_score
+                    best_move = next_move
+        print("best_move",best_move)
         return best_move
 
 
-    def minimax_moves(self, player,gamestate, max_player, depth):
+    def minimax_moves(self,gamestate, max_player, depth):
         """
+        O(n^m), n: number of nodes, m:depth
+
         Minimax pseudocode was referred from:
         https://www.youtube.com/watch?v=l-hh51ncgDI&t=254s
         """
+        print()
+        print("minimax_moves")
         print("depth", depth)
-        gamestate.reset()
+        # gamestate.reset()
         next_move_options = gamestate.get_all_valid_moves()
         gamestate.player = WHITE if gamestate.player == BLACK else BLACK
         gamestate.opponent = WHITE if gamestate.opponent == BLACK else BLACK
-        if depth == 0 or game_over(gamestate):
-            return gamestate.evaluation(strategy=self.strategy)
+        best_move = None
+        if next_move_options == [] or depth == 0 or game_over(gamestate):
+            print("lower_level")
+            return gamestate.evaluation(self.strategy,next_move_options)
         if max_player:
             max_value = float('-inf')
             # loop each child
             for next_move_info in next_move_options:
                 # generate new gamestate
-                next_gamestate = simulate_move(gamestate, next_move_info,player)
+                next_gamestate = simulate_move(gamestate, next_move_info)
                 # evaluation
-                value = self.minimax_moves(player,gamestate=next_gamestate, max_player=False, depth=depth - 1)
-
+                value = self.minimax_moves(gamestate=next_gamestate, max_player=False, depth=depth - 1)
+                print("compare", "max_value", max_value, "value", value)
                 max_value = max(max_value, value)
+
             print("max_value",max_value)
             return max_value
         else:
@@ -133,12 +141,11 @@ class MinimaxPlayer:
             min_value = float('inf')
             for next_move_info in next_move_options:
                 print("next_move_info:",next_move_info)
-
-                next_gamestate = simulate_move(gamestate, next_move_info,player)
-
-                value = self.minimax_moves(player,gamestate=next_gamestate, max_player=True, depth=depth - 1)
+                next_gamestate = simulate_move(gamestate, next_move_info)
+                value = self.minimax_moves(gamestate=next_gamestate, max_player=True, depth=depth - 1)
+                print("compare","min_value", min_value, "value",value)
                 min_value = min(min_value, value)
-            print("min_value",min_value)
+            print("final min_value",min_value)
             return min_value
 
 
@@ -163,26 +170,31 @@ def game_over(game):
         return True
 
 
-def simulate_move(game, next_move,player):
-    simulated_game = deepcopy(game)
-    for move in next_move:
-        simulated_game.boards.draw_board(player.win)
-        if move['start_board'] == 1:
-            piece = simulated_game.boards.board1[move['start_move'][0]][move['start_move'][1]]
-            if piece!=0:
-                one_moves, two_moves, transfer_moves = simulated_game.get_valid_moves_piece(piece, simulated_game.boards.board1,1)
-        else:
-            piece = simulated_game.boards.board2[move['start_move'][0]][move['start_move'][1]]
-            if piece != 0:
-                one_moves, two_moves, transfer_moves = simulated_game.get_valid_moves_piece(piece, simulated_game.boards.board2,2)
-        if piece!=0:
-            one_move_list = [[m] for m in one_moves]
-            valid_moves = one_move_list + two_moves + transfer_moves
-            pygame.draw.circle(player.win, (0, 255, 0), (piece.x, piece.y), 30, 5)
+def simulate_move(game, next_move):
+    """
+    O(n)
 
-            player.draw_valid_moves(valid_moves)
-            pygame.display.update()
-            pygame.time.delay(200)
+    """
+    simulated_game = deepcopy(game)
+    for move in next_move:  # O(n)
+
+        # simulated_game.boards.draw_board(player.win)
+        # if move['start_board'] == 1:
+        #     piece = simulated_game.boards.board1[move['start_move'][0]][move['start_move'][1]]
+        #     if piece!=0:
+        #         one_moves, two_moves, transfer_moves = simulated_game.get_valid_moves_piece(piece, simulated_game.boards.board1,1)
+        # else:
+        #     piece = simulated_game.boards.board2[move['start_move'][0]][move['start_move'][1]]
+        #     if piece != 0:
+        #         one_moves, two_moves, transfer_moves = simulated_game.get_valid_moves_piece(piece, simulated_game.boards.board2,2)
+        # if piece!=0:
+        #     one_move_list = [[m] for m in one_moves]
+        #     valid_moves = one_move_list + two_moves + transfer_moves
+        #     pygame.draw.circle(player.win, (0, 255, 0), (piece.x, piece.y), 30, 5)
+        #
+        #     player.draw_valid_moves(valid_moves)
+        #     pygame.display.update()
+        #     pygame.time.delay(200)
         if move['start_board'] != move['end_board']:
             simulated_game.transfer_piece(move, make_move=True)
         else:

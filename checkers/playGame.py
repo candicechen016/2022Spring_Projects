@@ -64,3 +64,23 @@ class playGame:
             self.update_board(move)
         self.turn_num+=2
         self.change_turn()
+
+    def game_over(self):
+        all_moves = self.gs.get_all_valid_moves()
+        has_pieces = 0
+        # condition 1: the player has NO STEPS and NO WAY to transfer to both boards
+        if not all_moves:
+            print('no_moves:', self.gs.opponent, 'wins')
+            return True
+        for board_name in ['board1', 'board2']:
+            # condition 2: the player has NO PIECES on Both boards
+            if len(self.gs.positions[board_name]) == 0:
+                has_pieces += 1
+                continue
+        if has_pieces == 2:
+            print('No piece:', self.gs.opponent, 'wins')
+            return True
+        # draw: no capture in 50 turns
+        if self.gs.no_capture >= 50:
+            print('draw')
+            return True
