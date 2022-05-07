@@ -5,7 +5,7 @@ Player module: Random Player and Minimax Player
 import random
 from copy import deepcopy
 
-from checkers.cons import WHITE, BLACK
+from checkers.cons import WHITE, BLACK, ROWS
 
 
 class randomPlayer:
@@ -14,8 +14,8 @@ class randomPlayer:
         self.win_count = 0
         self.color = color
 
-    def get_next_move(self, gamestate):
-        next_move_options = gamestate.get_valid_moves()
+    def get_next_move(self, game):
+        next_move_options = game.gs.get_valid_moves()
         mode1_num = len(next_move_options['one_move'])
         mode2_num = len(next_move_options['two_move'])
         mode3_num = len(next_move_options['transfer_move'])
@@ -29,7 +29,9 @@ class randomPlayer:
             elif next_move_mode == 2:
                 next_move = random.choice(next_move_options['two_move'])
             elif next_move_mode == 3:
+                game.gs.boards.transfer_count[self.color] += 1
                 next_move = random.choice(next_move_options['transfer_move'])
+
         return next_move
 
 
@@ -43,22 +45,53 @@ class MinimaxPlayer:
         self.draw_count = 0
         self.strategy = strategy  # 'kings' or 'capture'
         self.depth = depth
+        self.count_transfer = 0
+        half_edge = ROWS // 2
+        self.center_square = [(half_edge, half_edge), (half_edge + 1, half_edge), (half_edge, half_edge + 1),
+                              (half_edge + 1, half_edge + 1)]
 
-    def get_next_move(self, gamestate):
-        next_move_options = gamestate.get_all_valid_moves()
+    def get_next_move(self, game):
+        next_move_options = game.gs.get_all_valid_moves()
         print("next_move_options", len(next_move_options))
+        print("next_move_options", next_move_options[0])
+        top_candidates = []
+        second_candidates = []
+        third_candidates = []
+        minimax_candidates = []
         best_move = None
-        highest_score = float('-inf')
-        if next_move_options:
-            for idx, next_move in enumerate(next_move_options):
-                gamestate.reset()
-                next_gamestate = simulate_move(gamestate, next_move)
-                node_score = self.minimax_moves(alpha=float("-inf"), beta=float("+inf"), gamestate=next_gamestate,
-                                                max_player=True, depth=self.depth)
-                if node_score > highest_score:
-                    highest_score = node_score
-                    best_move = next_move
 
+        for next_move in next_move_options:
+            if next_move[0]['end_move'] in self.center_square or next_move[1]['end_move'] in self.center_square:
+                top_candidates.append(next_move)
+            if next_move[0]['capture'] or next_move[1]['capture']:
+                second_candidates.append(next_move)
+            if next_move[0]['start_move'] != next_move[1]['start_move']:
+                third_candidates.append(next_move)
+
+        if top_candidates:
+            best_move = random.choice(top_candidates)
+        elif second_candidates:
+            minimax_candidates += second_candidates
+            best_move = random.choice(second_candidates)
+        else:
+            minimax_candidates += next_move_options
+            best_move = random.choice(third_candidates)
+
+        if game.turn_num // 2 <= ROWS * 2:
+            return best_move
+
+        highest_score = float('-inf')
+
+        for next_move in minimax_candidates:
+            game.gs.reset()
+            next_gamestate = simulate_move(game.gs, next_move)
+            node_score = self.minimax_moves(alpha=float("-inf"), beta=float("+inf"), gamestate=next_gamestate,
+                                            max_player=True, depth=self.depth)
+            if node_score > highest_score:
+                highest_score = node_score
+                best_move = next_move
+        if best_move[0]['start_board'] != best_move[0]['end_board']:
+            game.gs.boards.transfer_count[self.color] += 1
         return best_move
 
     def minimax_moves(self, alpha, beta, gamestate, max_player, depth):

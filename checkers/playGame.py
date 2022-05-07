@@ -37,6 +37,9 @@ class playGame:
         pygame.display.update()
 
     def human_move(self, next_move):
+        if next_move[0]['start_board'] != next_move[0]['end_board']:
+            self.gs.boards.transfer_count[self.gs.player] += 1
+
         self.update_board(next_move)
         self.turn_num += 1
         if self.turn_num % 2 == 0:

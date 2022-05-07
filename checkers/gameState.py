@@ -13,6 +13,7 @@ class GameState:
         self.player = player
         self.opponent = BLACK if self.player == WHITE else WHITE
         self.no_capture = no_capture
+        self.independent_universe = {self.player:0, self.opponent:0 }
         self.reset()
 
     def reset(self):
@@ -32,6 +33,9 @@ class GameState:
         return positions1
 
     def one_move(self, row_dirs, position, board, board_num, captured=[], transfer=False):
+        """
+        O(n*m) where n and m represents the number of adjacent squares because two moves are available in one turn.
+        """
         next_moves = []
         captured_left = False
         for row_dir in row_dirs:
@@ -66,7 +70,6 @@ class GameState:
                         elif next_row + row_dir == 1 and self.player == BLACK:
                             row_dirs = (-1,)
         if captured_left == False and captured:
-
             next_move = {'end_move': (position[0], position[1]), 'end_board': board_num,
                          'capture': copy.deepcopy(captured)}
 
@@ -75,6 +78,8 @@ class GameState:
 
     def get_normal_moves(self, piece, board, board_num):
         """
+        O(n*m) where n and m represents the number of valid moves for a single piece
+
         :return:
         one_move_list: dict of all one valid steps for each board
         two_move_list: all two continuous steps for each board
@@ -87,13 +92,8 @@ class GameState:
         one_move_list_capture = {1: [], 2: []}
         two_move_list_capture = []
         end_moves = self.one_move(piece.direction, (row, col), board, board_num)
-        first_end_move_set = []
-        second_end_move_set = []
+        second_move_set = []
         for m in end_moves:
-            if m['end_move'] in set(first_end_move_set):
-                continue
-            else:
-                first_end_move_set.append(m['end_move'])
             m['start_move'] = (row, col)
             m['start_board'] = board_num
             one_move_board = self.update_board_normal(m, board)
@@ -105,15 +105,15 @@ class GameState:
                                          m['end_move'], one_move_board, board_num)
             if second_moves:
                 for n in second_moves:
-                    if n['end_move'] in set(second_end_move_set):
+                    if (m['start_move'], n['end_move']) in set(second_move_set):
                         continue
                     else:
-                        second_end_move_set.append(n['end_move'])
-                    n['start_move'] = m['end_move']
-                    n['start_board'] = board_num
-                    two_move_list.append((m, n))
-                    if has_capture:
-                        two_move_list_capture.append((m, n))
+                        second_move_set.append((m['start_move'], n['end_move']))
+                        n['start_move'] = m['end_move']
+                        n['start_board'] = board_num
+                        two_move_list.append((m, n))    # sample move structure {'one_move': one_move_comb, 'two_move': two_move_list, 'transfer_move': transfer_move_list}
+                        if has_capture:
+                            two_move_list_capture.append((m, n))
             if has_capture:
                 return one_move_list_capture, two_move_list_capture
 
@@ -178,13 +178,19 @@ class GameState:
         return start_board, end_board
 
     def get_transferred_list(self, piece, start_board_num):
+        """
+        O(n) where n means the number of adjacent squares
+        """
         end_board_num = 2 if start_board_num == 1 else 1
         end_board = self.boards.board2 if start_board_num == 1 else self.boards.board1
         transfer_move_list = []
+        # a player can transfer at most 3 pieces per round
+        if self.boards.transfer_count[piece.color] == 3:
+            return []
 
-        # a player can teleport a piece to another board only when an opponent's pieces are 2 times more
-        #  than yours
-        if len(self.opponent_positions[start_board_num]) // len(self.positions[start_board_num]) < 2 :
+        # a player can teleport a piece to another board only when the difference of the number of pieces
+        # between opponent's is greater than or equal to 3
+        if len(self.opponent_positions[start_board_num]) - len(self.positions[start_board_num]) < 3:
             return []
         # each piece can only transfer once
         if (start_board_num == 1 and piece.coat == SILVER) or (start_board_num == 2 and piece.coat == GOLD):
@@ -207,7 +213,7 @@ class GameState:
         return transfer_move_list
 
     def get_valid_moves_piece(self, piece):
-        board=self.boards.board1 if piece.board_num==1 else self.boards.board2
+        board = self.boards.board1 if piece.board_num == 1 else self.boards.board2
         one_move_list, two_move_list, = self.get_normal_moves(piece, board, piece.board_num)
         transfer_move_list = self.get_transferred_list(piece, piece.board_num)
         return one_move_list, two_move_list, transfer_move_list
@@ -293,21 +299,40 @@ class GameState:
     def game_over(self):
         all_moves = self.get_all_valid_moves()
         has_pieces = 0
+
         # condition 1: the player has NO STEPS and NO WAY to transfer to both boards
         if not all_moves:
-            print('no_moves:', self.opponent, 'wins')
+            # print('No moves. ', winner, ' wins!')
             return True
+
+        # condition 2: the player has NO PIECES on Both boards
         for board_num in [1, 2]:
-            # condition 2: the player has NO PIECES on Both boards
             if len(self.positions[board_num]) == 0:
                 has_pieces += 1
                 continue
         if has_pieces == 2:
-            print('No piece:', self.opponent, 'wins')
+            # print('No pieces. ', winner, ' wins!')
             return True
-        # draw: no capture in 50 turns
 
-        if self.no_capture >= 50:
-            print('draw')
+        # if no capture in 100 turns and two players' pieces are completely separate in different board,
+        # the one with more pieces in his board wins
+        if self.no_capture >= 100:
+            opponent_count_board1, opponent_count_board2 = len(self.opponent_positions[1]), len(self.opponent_positions[2])
+            self_count_board1, self_count_board2 = len(self.positions[1]), len(self.positions[2])
+
+            if self_count_board1 == 0 and opponent_count_board1 != 0 and opponent_count_board2 ==0 and self_count_board2 !=0:
+                if opponent_count_board1 != opponent_count_board2:
+                    self.independent_universe = {self.player: opponent_count_board2, self.opponent: opponent_count_board1}
+                    return True
+
+            elif self_count_board2 == 0 and opponent_count_board2 != 0 and opponent_count_board1 ==0 and self_count_board1 !=0:
+                if self_count_board1 != opponent_count_board2:
+                    self.independent_universe = {self.player: self_count_board1,
+                                                 self.opponent: opponent_count_board2}
+                    return True
+
+            # if no capture in 100 turns and two players' pieces are not completely separate in different board,
+            # it's a draw
             return True
+
         return False

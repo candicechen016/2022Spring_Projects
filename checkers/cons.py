@@ -7,7 +7,8 @@ import pygame
 
 WIDTH, HEIGHT = 400, 400
 # ROWS, COLS = 8, 18
-ROWS = 6  # [4, 6, 8, 10, 12]
+# ROWS = 6  # [4, 6, 8, 10, 12]
+ROWS = 6
 COLS = 2 * ROWS + 2
 SQUARE_SIZE = HEIGHT // ROWS
 
