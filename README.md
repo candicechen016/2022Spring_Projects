@@ -7,7 +7,7 @@
 We aim to develop an interactive game, called "Parallel-Universes Checkers", which is based on the [**Checkers**](https://en.wikipedia.org/wiki/Checkers#:~:text=Checkers%20(American%20English)%2C%20also,Checkers%20is%20developed%20from%20alquerque), also known as **draughts**. We apply some new rules to the original one trying to make it more fun between players. The biggest difference is how we **EXTEND** the original board.
 
 ## Variant Rules
-(Basic Rules: [**Checkers**](https://en.wikipedia.org/wiki/Checkers#:~:text=Checkers%20(American%20English)%2C%20also,Checkers%20is%20developed%20from%20alquerque))  
+
 Two parallel-universes version of Checkers are also played on one board for two players. We want to make the most of use of the board since the original
     version of Checkers only use the dark squares. So a new universe is created in our version for players to play at the dark and
     light squares at the same time. We make it more fun based on the original rules.
@@ -30,7 +30,7 @@ Two parallel-universes version of Checkers are also played on one board for two 
     If two players keep chasing to each other without any capture in both boads for continuous 100 turns in total,
     we end the game as a draw.
 
-## Goal
+## Objectives
 1. Implement Checkers with variants.
 2. Design an interactive interface for users to compete with each other.
 3. Develop different Machine players using Minimax algorithm.
@@ -47,7 +47,7 @@ We develop our game window based on the traditional checkers. When the current p
 
 We use list of list to store boards' state while the coordinates of the position are stored in tuples. A tuple of dictionaries is used to store two continuous moves as the rules stated. The information of dictionary includes the pieces' positions of both iniitial and the targeted ones. The boards are also recorded in the dictionary since a transferred move could be made. The last important element is the positions of opponents when capturing happens.
 
-#### Class
+#### Classes
 * Boards and Piece: boards states and pieces' properties (e.q. king); communicate with interface
 * gameState: takes care of the rules and implements the mojority of calculations
 * playGame: connects the modules above and runs the game
