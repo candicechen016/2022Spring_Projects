@@ -22,9 +22,10 @@ Two parallel-universes version of Checkers are also played on one board for two 
 1. Players are allowed to do following actions during their turn:
     * Move ONE piece at the same universe TWICE (i.e. continuous two moves); continuous captures are allowed
     * Move ONE piece on EACH universe ONCE
-    * Transfer ONE piece at one universe to ANOTHER universe ONCE per turn as their first or second move
+    * Transfer ONE piece at one universe to ANOTHER universe ONCE per turn as their first move
     * Only allowed to transfer to an empty square and must go to an orthogonally-adjacent square on the other universe
     * CANNOT CAPTURE at the transferring round
+    * Pieces can only transfer once during the whole game process
 2. Winning conditions:
     * Once a player has NO PIECES on both boards on his turn, he loses.
     * Once a player has NO STEPS AND NO TRANFER options on both boards, he loses.
@@ -42,7 +43,7 @@ Two parallel-universes version of Checkers are also played on one board for two 
 
 ## UI
 ![image](https://user-images.githubusercontent.com/89559531/165950259-f9ab7605-9a49-46da-83dd-1650809b0cb6.png)
-
+We develop our game window based on the traditional checkers. When the current player chooses the piece he want to move, all the possible valid moves of the next two steps for the selected piece will be indicated by blue points. Pieces can tranfer between boards, players can disdinguish pieces' home board by theri coat. pieces initially form the left board wear gold coat, while the initially right pieces are in silver.                                                                                                      
 
 ### Contribution
 We build our fundamental rules and create a random player together in the first stage. Then, Yawen mainly worked on UI and Candice developed the two Minimax players. 
