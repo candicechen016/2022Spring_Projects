@@ -53,7 +53,7 @@ class MinimaxPlayer:
     def get_next_move(self, game):
         next_move_options = game.gs.get_all_valid_moves()
         print("next_move_options", len(next_move_options))
-        print("next_move_options", next_move_options[0])
+        # print("next_move_options", next_move_options[0])
         top_candidates = []
         second_candidates = []
         third_candidates = []

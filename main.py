@@ -195,12 +195,13 @@ def run_games(game_type, rounds):
 
         print_game_result(game, player1, player2)
 
-    print_stat(stats)
+    # print_stat(stats)
 
 if __name__ == '__main__':
 
 
     # current board size = 6
+    # (using ROWS in cons.py to change board size)
 
     # game_type:
     # 1: Human vs random player
