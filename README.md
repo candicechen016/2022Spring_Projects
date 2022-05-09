@@ -67,16 +67,16 @@ We design two Minimax players with simple evaluation. Since the valid moves in o
 
 
 #### Mimimax Heuristic Evaluation Function
-* Lion-King Player 
+* Lion-King Player:  
 score = (total pieces) - (total opponent's pieces) + (total king pieces) * 1.5 - (total opponent's king pieces) * 1.5
-* Aggressive Player - tend to capture as many as possible
+* Aggressive Player:  
 score = (possible single capture) + 2 * (possible continuous captures)
 
  
  
  
 ## Performance Measurement
-The program runs significantly longer when we increase the board size from 4 to 6. It took a couple of minutes for Minimax to search for a best move. The following is the result of a random player playing with an Aggressive (capture) player with depth 3 for a single run. As shown on the table, `minimax_moves` is the most time consuming function since the time complexity is  O(n`^`m`^`o), which is extreme large. The `get_normal_moves` is another costly function while deepcoy is called the most times.
+The program runs significantly longer when we increase the board size from 4 to 6. It took a couple of minutes for Minimax to search for a best move. The following is the result of a random player playing with an Aggressive (capture) player with depth 3 for a single run. As shown on the table, `minimax_moves` is the most time consuming function since the time complexity is  O(n`^`m`^`o), which is extreme large. The `get_normal_moves` is another costly function while deepcoy is called the most times for simulation.
 
  
 ![image](https://user-images.githubusercontent.com/89559531/167251625-620e0e45-b0ad-4f5a-8c4a-c9be6fe6b495.png)
