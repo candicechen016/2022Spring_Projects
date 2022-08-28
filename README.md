@@ -6,6 +6,18 @@
 
 We aim to develop an interactive game, called "Parallel-Universes Checkers", which is based on the [**Checkers**](https://en.wikipedia.org/wiki/Checkers#:~:text=Checkers%20(American%20English)%2C%20also,Checkers%20is%20developed%20from%20alquerque), also known as **draughts**. We apply some new rules to the original one trying to make it more fun between players. The biggest difference is how we **EXTEND** the original board.
 
+## Objectives
+1. Implement Checkers with variants.
+2. Design an interactive interface for users to compete with each other.
+3. Develop different Machine players using Minimax algorithm.
+   * Random Player - always randomly choose next step without any preference and strategy
+   * Lion-King Player - eager to become a king as soon as possible 
+   * Aggressive Player - tend to capture as many as possible
+
+## Interactive Interface
+![image](https://user-images.githubusercontent.com/89559531/165950259-f9ab7605-9a49-46da-83dd-1650809b0cb6.png)
+We develop our game window based on the traditional checkers. When the current player chooses the piece he want to move, all the possible valid moves of the next two steps for the selected piece will be indicated by blue points. Pieces can tranfer between boards, players can disdinguish pieces' home board by theri coat. pieces initially form the left board wear gold coat, while the initially right pieces are in silver.                                       
+
 ## Variant Rules
 
 Two parallel-universes version of Checkers are also played on one board for two players. We want to make the most of use of the board since the original
@@ -30,17 +42,7 @@ Two parallel-universes version of Checkers are also played on one board for two 
     If two players keep chasing to each other without any capture in both boads for continuous 100 turns in total,
     we end the game as a draw.
 
-## Objectives
-1. Implement Checkers with variants.
-2. Design an interactive interface for users to compete with each other.
-3. Develop different Machine players using Minimax algorithm.
-   * Random Player - always randomly choose next step without any preference and strategy
-   * Lion-King Player - eager to become a king as soon as possible 
-   * Aggressive Player - tend to capture as many as possible
-
-## Interactive Interface
-![image](https://user-images.githubusercontent.com/89559531/165950259-f9ab7605-9a49-46da-83dd-1650809b0cb6.png)
-We develop our game window based on the traditional checkers. When the current player chooses the piece he want to move, all the possible valid moves of the next two steps for the selected piece will be indicated by blue points. Pieces can tranfer between boards, players can disdinguish pieces' home board by theri coat. pieces initially form the left board wear gold coat, while the initially right pieces are in silver.                                                                                                      
+                                                             
 
 ## Analysis
 ### Data Structures
@@ -55,11 +57,11 @@ We use list of list to store boards' state while the coordinates of the position
 
 #### Critical Functions and Complexity
 * `get_positions` gets the positions of every pieces of a player. It could be seen as constant time O(1) since the size of boards is fixed.
-* `one_move` traverses the adjacent squares searching empty spots or valid captures. O(n`^`m) where n and m represents the number of adjacent squares because two moves are available in one turn and continuous captures is possible.
-* `get_normal_moves` and `get_transferred_list` calculate the possible moves of each piece. They traverse the adjacent squares and determine whether the positions are occupied or are an valid capture. Their time complexity are both O(n`^`m) where n and m represents the number of valid moves of a single piece. 
-* `get_valid_moves_piece` take a piece as input to get all valid moves interms of the three ways of possible moving options. It calls the `get_normal_moves` and `get_transferred_list` functions to get all options so it's O(n`^`m) as well.
-* `get_valid_moves` iterates every pieces to get all valid moves in single turn. It's O(n) where n is the number of pieces. We could also see it as relatively fixed variable since the number of pieces are almost constant. However, there is `get_valid_moves_piece` inside and is executed for each piece, we consider the complexity would be O(n`^`m) here n and m means the number of valid moves.
-* `minimax_moves` simulates the possible moves following the assigned depth dwon to the leaves of the tree. Given the game state, it traverse all the possible valid moves so it's O(n`^`m) where n and m are the number of moves if the depth is 2. The cost is expensive because of several options so we implement the alpha beta pruning to reduce unnecessary calculation. 
+* `one_move` traverses the adjacent squares searching empty spots or valid captures. O(n`^`2) where n represents the number of adjacent squares because two moves are available in one turn and continuous captures is possible.
+* `get_normal_moves` and `get_transferred_list` calculate the possible moves of each piece. They traverse the adjacent squares and determine whether the positions are occupied or are an valid capture. Their time complexity are both O(n`^`2) where n represents the number of valid moves of a single piece. 
+* `get_valid_moves_piece` take a piece as input to get all valid moves interms of the three ways of possible moving options. It calls the `get_normal_moves` and `get_transferred_list` functions to get all options so it's O(n`^`2) as well.
+* `get_valid_moves` iterates every pieces to get all valid moves in single turn. It's O(n) where n is the number of pieces. We could also see it as relatively fixed variable since the number of pieces are almost constant. However, there is `get_valid_moves_piece` inside and is executed for each piece, we consider the complexity would be O(n`^`2) here n means the number of valid moves.
+* `minimax_moves` simulates the possible moves following the assigned depth dwon to the leaves of the tree. Given the game state, it traverse all the possible valid moves so it's O(n`^`2) where n is the number of moves if the depth is 2. The cost is expensive because of several options so we implement the alpha beta pruning to reduce unnecessary calculation. 
 
 
 #### Core Algorithms
